@@ -12,20 +12,33 @@ db = mysql.connector.connect(
 mycursor = db.cursor()
 
 #Login function
+def start():
+    choice = input("Please choose login(1) or sign-up(2) or quit(0):")
+    if choice == '0':
+        quit()
+    elif choice == '1':
+        login()
+    elif choice == '2':
+        signup()
+    else:
+        print("Error, invalid input. Try again.")
+        start()
+
 def login():
     found = 0
+    attempts = 0
     while found == 0:
-        id = input("Please enter your employee ID (enter 0 to quit): ")
+        id = input("Please enter your User ID (enter 0 to quit): ")
         if id == '0':
             quit()
         mycursor.execute("SELECT * FROM Users WHERE USER_ID = (%s)", (id,))
         for x in mycursor:
             found += 1
         if found == 0:
-            print("That Employee ID does not exist. Please enter a valid ID or scram!")
+            print("Error, That User ID does not exist.")
     
     correct = 0
-    while correct == 0:
+    while correct == 0 and attempts < 3:
         pswd = input("Please enter your password (enter 0 to quit): ")
         if pswd == '0':
             quit()
@@ -33,7 +46,39 @@ def login():
         for x in mycursor:
             correct += 1
         if correct == 0:
-            print("That password is not correct. Enter the correct password or scram!")
+            attempts += 1
+            print(f"Error, password incorrect. {3 - attempts} Attempts left.")
+    if attempts >= 3:
+        print("Account locked due to too many failed attempts.")
+        quit()
+    
+
+def signup():
+    new = 0
+    while new == 0:
+        email = input("Enter your email (enter 0 to quit): ")
+        if email == '0':
+            quit()
+        mycursor.execute("SELECT * FROM Users WHERE email = %s", (email,))
+        if mycursor.fetchone():
+            print(f"Error, email already exists. Please use a different email.")
+        else:
+            new += 1
+            phone_number = input("Enter your phone number: ")
+            first_name = input("Enter your first name: ")
+            last_name = input("Enter your last name: ")
+            password = input("Enter your password: ")
+            authorization = 'default'
+            default_language = input("Enter your default language: ")
+            language_id = 1  # Example: Defaulting to English with language_id = 1
+
+            mycursor.execute("""
+                INSERT INTO Users (phone_number, email, first_name, last_name, password, authorization, default_language, language_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """, (phone_number, email, first_name, last_name, password, authorization, default_language, language_id))
+            db.commit()
+            print("User registered successfully!")
+            return
 
 def Show_Chompskis():
     print("age, name, height, weight, no. of teeth, swarm_id")

@@ -8,7 +8,7 @@ import os
     
         
 def main():
-    sq.login()
+    sq.start()
 
 if __name__ == "__main__":
     main()
