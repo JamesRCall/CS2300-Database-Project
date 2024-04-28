@@ -1,9 +1,9 @@
 CREATE TABLE User (
-    USER_ID INTEGER PRIMARY KEY,
+    USER_ID INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT,
     phone_number VARCHAR(16),
     email VARCHAR(64) NOT NULL,
-    first_name VARCHAR(64),
-    last_name VARCHAR(64),
+    first_name VARCHAR(64) NOT NULL,
+    last_name VARCHAR(64) NOT NULL,
     default_language VARCHAR(64),
     language_id INTEGER,
     FOREIGN KEY (language_id) REFERENCES Language(language_id)
@@ -16,7 +16,7 @@ CREATE TABLE User_Selected_Languages (
 );
 
 CREATE TABLE Language (
-    language_id INTEGER PRIMARY KEY,
+    language_id INTEGER PRIMARY KEY AUTO_INCREMENT,
     word_count INTEGER CHECK (word_count >= 0),
     language_name VARCHAR(64) NOT NULL,
     user_id INTEGER,
@@ -24,21 +24,21 @@ CREATE TABLE Language (
 );
 
 CREATE TABLE Word (
-    Word_ID INTEGER PRIMARY KEY,
+    Word_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
     Text TEXT NOT NULL,
     language_id INTEGER,
     FOREIGN KEY (language_id) REFERENCES Language(language_id)
 );
 
 CREATE TABLE Definition (
-    Definition_id INTEGER PRIMARY KEY,
+    Definition_id INTEGER PRIMARY KEY AUTO_INCREMENT,
     text TEXT NOT NULL,
     Word_ID INTEGER,
     FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)
 );
 
 CREATE TABLE Word_List (
-    List_ID INTEGER PRIMARY KEY,
+    List_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
     Word_Count INTEGER CHECK (Word_Count >= 0),
     user_id INTEGER,
     FOREIGN KEY (user_id) REFERENCES User(USER_ID)
