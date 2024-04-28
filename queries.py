@@ -4,10 +4,9 @@ from enum import Enum
 
 db = mysql.connector.connect(
     host= "localhost",
-    user= "USER",
-    password = "PASSWORD",
-    database = "DATABASE"
-
+    user= "root",
+    password = "mysql",
+    database = "test5"
 )
 
 mycursor = db.cursor()
@@ -19,7 +18,7 @@ def login():
         id = input("Please enter your employee ID (enter 0 to quit): ")
         if id == '0':
             quit()
-        mycursor.execute("SELECT * FROM Employee WHERE employee_id = (%s)", (id,))
+        mycursor.execute("SELECT * FROM Users WHERE USER_ID = (%s)", (id,))
         for x in mycursor:
             found += 1
         if found == 0:
@@ -30,7 +29,7 @@ def login():
         pswd = input("Please enter your password (enter 0 to quit): ")
         if pswd == '0':
             quit()
-        mycursor.execute("SELECT * FROM Employee WHERE employee_id = (%s) AND password = (%s)", (id, pswd))
+        mycursor.execute("SELECT * FROM Users WHERE USER_ID = (%s) AND password = (%s)", (id, pswd))
         for x in mycursor:
             correct += 1
         if correct == 0:

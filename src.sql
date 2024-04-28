@@ -1,4 +1,5 @@
 -- Create the database
+DROP DATABASE IF EXISTS test5;
 CREATE DATABASE IF NOT EXISTS test5;
 USE test5;
 
@@ -9,6 +10,8 @@ CREATE TABLE IF NOT EXISTS Users (
     email VARCHAR(64) NOT NULL,
     first_name VARCHAR(64) NOT NULL,
     last_name VARCHAR(64) NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    authorization varchar(50),
     default_language VARCHAR(64),
     language_id INTEGER
 );
@@ -52,4 +55,4 @@ ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_User FOREIGN KEY (user_id) REFE
 
 -- Insert initial data (ensure this table name matches your schema)
 INSERT INTO Languages VALUES(1, 0, 'English');
-INSERT INTO Users VALUES (1, '111-222-3333', 'john_appleseed@gmail.com', 'John', 'Appleseed', 'English', 1);
+INSERT INTO Users VALUES (1, '111-222-3333', 'john_appleseed@gmail.com', 'John', 'Appleseed', 'no', 'default', 'English', 1);
