@@ -8,7 +8,7 @@ import os
     
         
 def main():
-    sq.start()
+    sq.menu()
 
 if __name__ == "__main__":
     main()
