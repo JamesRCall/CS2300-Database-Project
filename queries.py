@@ -147,3 +147,4 @@ def Delete_Definition():
         print("Definition does not exist")
     else:
       print("Word does not exist")
+    return
