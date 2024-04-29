@@ -85,7 +85,7 @@ def Show_Chompskis():
     mycursor.execute("SELECT * FROM Gnome_Chompskis")
     for x in mycursor:
         print(x)
-        
+   
 def Add_Chompski(age : int, name : str, height : float, weight : float, no_teeth : int, swarm_id : int):
     try: 
         mycursor.execute("INSERT Gnome_Chompskis(age, name, height, weight, no_teeth, swarm_id)VALUES(%s,%s,%s,%s,%s,%s)", (age, name, height, weight, no_teeth, swarm_id))
@@ -100,10 +100,21 @@ def Add_Chompski(age : int, name : str, height : float, weight : float, no_teeth
     choice = input("Database Updated [press ENTER]")
     if choice == 1:
        db.commit()
-       
+
 def Create_Tables():
     mycursor.execute("CREATE TABLE Employee (employee_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,fname VARCHAR(50) NOT NULL, mname VARCHAR(50),lname VARCHAR(50) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('Intern','Employee', 'Supervisor', 'Bossman'))")
     mycursor.execute("CREATE TABLE Swarm (swarm_id int PRIMARY KEY AUTO_INCREMENT, name varchar(45) NOT NULL, latitude double(9, 5), longitude double (9,5))")
     mycursor.execute("CREATE TABLE Oversees (employee_id int, swarm_id int, FOREIGN KEY(employee_id) REFERENCES Employee(employee_id),  FOREIGN KEY(swarm_id) REFERENCES Swarm(swarm_id))")
     mycursor.execute("CREATE TABLE Gnome_Chompskis (chompskis_id int PRIMARY KEY AUTO_INCREMENT,name varchar(45) NOT NULL,  age smallint, height double(10,2), weight double (10,2), no_teeth int UNSIGNED, swarm_id int, FOREIGN KEY(swarm_id) REFERENCES Swarm(swarm_id))")
     print("Tables created")
+
+def Add_Definition():
+    word_name = input("Enter the word: ")
+    mycursor.execute("SELECT Word_ID FROM Word WHERE Text=word_name")
+    word_id = mycursor.fetchone()
+    word_id = word_id[0]
+    definition = input("Enter the definition: ")
+    mycursor.execute("INSERT INTO Word_Definition (definition, word_id)")
+    db.commit()
+    print("Definition entered successfully!")
+    return
