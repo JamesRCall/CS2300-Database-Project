@@ -112,6 +112,10 @@ def Add_Chompski(age : int, name : str, height : float, weight : float, no_teeth
        db.commit()
        
 def Create_Tables():
+    mycursor.execute("CREATE TABLE Users (USER_ID int PRIMARY KEY NOT NULL AUTO_INCREMENT, phone_number VARCHAR(16), email VARCHAR(64) NOT NULL, first_name VARCHAR(64) NOT NULL, last_name VARCHAR(64) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('default', 'admin', 'CEO'), default_language VARCHAR(64), language_id int NOT NULL)")
+    print("Tables created")
+
+def Create_Tables_Reference():
     mycursor.execute("CREATE TABLE Employee (employee_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,fname VARCHAR(50) NOT NULL, mname VARCHAR(50),lname VARCHAR(50) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('Intern','Employee', 'Supervisor', 'Bossman'))")
     mycursor.execute("CREATE TABLE Swarm (swarm_id int PRIMARY KEY AUTO_INCREMENT, name varchar(45) NOT NULL, latitude double(9, 5), longitude double (9,5))")
     mycursor.execute("CREATE TABLE Oversees (employee_id int, swarm_id int, FOREIGN KEY(employee_id) REFERENCES Employee(employee_id),  FOREIGN KEY(swarm_id) REFERENCES Swarm(swarm_id))")
