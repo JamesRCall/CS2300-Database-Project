@@ -101,20 +101,30 @@ def Add_Chompski(age : int, name : str, height : float, weight : float, no_teeth
     if choice == 1:
        db.commit()
 
-def Create_Tables():
-    mycursor.execute("CREATE TABLE Employee (employee_id int PRIMARY KEY NOT NULL AUTO_INCREMENT,fname VARCHAR(50) NOT NULL, mname VARCHAR(50),lname VARCHAR(50) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('Intern','Employee', 'Supervisor', 'Bossman'))")
-    mycursor.execute("CREATE TABLE Swarm (swarm_id int PRIMARY KEY AUTO_INCREMENT, name varchar(45) NOT NULL, latitude double(9, 5), longitude double (9,5))")
-    mycursor.execute("CREATE TABLE Oversees (employee_id int, swarm_id int, FOREIGN KEY(employee_id) REFERENCES Employee(employee_id),  FOREIGN KEY(swarm_id) REFERENCES Swarm(swarm_id))")
-    mycursor.execute("CREATE TABLE Gnome_Chompskis (chompskis_id int PRIMARY KEY AUTO_INCREMENT,name varchar(45) NOT NULL,  age smallint, height double(10,2), weight double (10,2), no_teeth int UNSIGNED, swarm_id int, FOREIGN KEY(swarm_id) REFERENCES Swarm(swarm_id))")
-    print("Tables created")
-
 def Add_Definition():
     word_name = input("Enter the word: ")
-    mycursor.execute("SELECT Word_ID FROM Word WHERE Text=word_name")
+    mycursor.execute("SELECT Word_ID FROM Word WHERE Text=%s", (word_name,))
     word_id = mycursor.fetchone()
-    word_id = word_id[0]
-    definition = input("Enter the definition: ")
-    mycursor.execute("INSERT INTO Word_Definition (definition, word_id)")
-    db.commit()
-    print("Definition entered successfully!")
+    if word_id:
+      word_id = word_id[0]
+      definition = input("Enter the definition: ")
+      mycursor.execute("INSERT INTO Word_Definition (definition, word_id) VALUES (%s, %s)", (definition, word_id))
+      db.commit()
+      print("Definition entered successfully!")
+    else:
+      print("Word does not exist")
+    return
+
+def Modify_Definition():
+    word_definition = input("Enter the definition completely: ")
+    mycursor.execute("SELECT Definition_id FROM Word_definition WHERE text=%s", (word_definition,))
+    definition_id = mycursor.fetchone()
+    if definition_id:
+      definition_id = definition_id[0]
+      new_definition = input("Enter the new definition: ")
+      mycursor.execute("UPDATE Word_Definition SET text=%s WHERE Definition_id=%s", (new_definition,definition_id))
+      db.commit()
+      print("Definition changed successfully")
+    else:
+      print("Entered definition does not exist")
     return
