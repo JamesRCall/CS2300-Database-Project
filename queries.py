@@ -5,7 +5,7 @@ from enum import Enum
 db = mysql.connector.connect(
     host= "localhost",
     user= "root",
-    password = "mysql",
+    password = "root",
     database = "test5"
 )
 
