@@ -72,14 +72,24 @@ def signup():
             default_language = input("Enter your default language: ")
             language_id = 1  # Example: Defaulting to English with language_id = 1
 
-            mycursor.execute("""
-                INSERT INTO Users (phone_number, email, first_name, last_name, password, authorization, default_language, language_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """, (phone_number, email, first_name, last_name, password, authorization, default_language, language_id))
-            db.commit()
-            print("User registered successfully!")
-            return
+            Add_User(phone_number, email, first_name, last_name, password, authorization, default_language, language_id)
+    return
 
+def Add_User(phone_number, email, first_name, last_name, password, authorization, default_language, language_id): 
+    try: 
+        mycursor.execute("""
+            INSERT INTO Users (phone_number, email, first_name, last_name, password, authorization, default_language, language_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (phone_number, email, first_name, last_name, password, authorization, default_language, language_id))
+        db.commit()
+    except mysql.connector.IntegrityError as err:
+        print("Error: {}".format(err))
+        return err
+
+    choice = input("User registered successfully! [press ENTER]")
+    if choice == 1:
+       db.commit()
+    
 def Show_Chompskis():
     print("age, name, height, weight, no. of teeth, swarm_id")
     mycursor.execute("SELECT * FROM Gnome_Chompskis")
