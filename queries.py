@@ -105,7 +105,7 @@ def Add_Definition():
     word_name = input("Enter the word: ")
     mycursor.execute("SELECT Word_ID FROM Word WHERE Text=%s", (word_name,))
     word_id = mycursor.fetchone()
-    if word_id:
+    if word_id is not None:
       word_id = word_id[0]
       definition = input("Enter the definition: ")
       mycursor.execute("INSERT INTO Word_Definition (definition, word_id) VALUES (%s, %s)", (definition, word_id))
@@ -119,7 +119,7 @@ def Modify_Definition():
     word_definition = input("Enter the definition completely: ")
     mycursor.execute("SELECT Definition_id FROM Word_definition WHERE text=%s", (word_definition,))
     definition_id = mycursor.fetchone()
-    if definition_id:
+    if definition_id is not None:
       definition_id = definition_id[0]
       new_definition = input("Enter the new definition: ")
       mycursor.execute("UPDATE Word_Definition SET text=%s WHERE Definition_id=%s", (new_definition,definition_id))
@@ -128,3 +128,22 @@ def Modify_Definition():
     else:
       print("Entered definition does not exist")
     return
+
+def Delete_Definition():
+    word_name = input("Enter the word: ")
+    mycursor.execute("SELECT Word_ID FROM Word WHERE Text=%s", (word_name,))
+    word_id = mycursor.fetchone()
+    if word_id is not None:
+      word_id = word_id[0]
+      word_definition = input("Enter the definition completely: ")
+      mycursor.execute("SELECT Definition_id FROM Word_definition WHERE text=%s AND Word_ID=%s", (word_definition,word_id))
+      definition_id = mycursor.fetchone()
+      if definition_id is not None:
+        definition_id = definition_id[0]
+        mycursor.execute("DELETE FROM Word_Definition WHERE Definition_id=%s", (definition_id,))
+        db.commit()
+        print("Definition deleted successfully!")
+      else:
+        print("Definition does not exist")
+    else:
+      print("Word does not exist")
