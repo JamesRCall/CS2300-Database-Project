@@ -113,6 +113,17 @@ def Add_Chompski(age : int, name : str, height : float, weight : float, no_teeth
        
 def Create_Tables():
     mycursor.execute("CREATE TABLE Users (USER_ID int PRIMARY KEY NOT NULL AUTO_INCREMENT, phone_number VARCHAR(16), email VARCHAR(64) NOT NULL, first_name VARCHAR(64) NOT NULL, last_name VARCHAR(64) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('default', 'admin', 'CEO'), default_language VARCHAR(64), language_id int NOT NULL)")
+    mycursor.execute("CREATE TABLE Languages (language_id INTEGER PRIMARY KEY AUTO_INCREMENT, word_count INTEGER CHECK (word_count >= 0),language_name VARCHAR(64) NOT NULL)")
+    mycursor.execute("CREATE TABLE User_Selected_Languages (USER_ID int, Selected_Languages VARCHAR(64) NOT NULL)")
+    mycursor.execute("CREATE TABLE Word (Word_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Text TEXT NOT NULL, language_id INTEGER)")
+    mycursor.execute("CREATE TABLE Word_Definition (Definition_id INTEGER PRIMARY KEY AUTO_INCREMENT, text TEXT NOT NULL, Word_ID INTEGER)")
+    mycursor.execute("CREATE TABLE Word_List (List_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Word_Count INTEGER CHECK (Word_Count >= 0), user_id INTEGER)")
+
+    mycursor.execute("ALTER TABLE Users ADD CONSTRAINT FK_User_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
+    mycursor.execute("ALTER TABLE Word ADD CONSTRAINT FK_Word_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
+    mycursor.execute("ALTER TABLE Word_Definition ADD CONSTRAINT FK_WordDef_Word FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)")
+    mycursor.execute("ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_User FOREIGN KEY (user_id) REFERENCES Users(USER_ID)")
+    
     print("Tables created")
 
 def Create_Tables_Reference():
