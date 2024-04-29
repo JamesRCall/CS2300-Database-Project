@@ -89,7 +89,13 @@ def Add_User(phone_number, email, first_name, last_name, password, authorization
     choice = input("User registered successfully! [press ENTER]")
     if choice == 1:
        db.commit()
-    
+
+def Show_Users():
+    print("age, name, height, weight, no. of teeth, swarm_id")
+    mycursor.execute("SELECT * FROM Users")
+    for x in mycursor:
+        print(x)
+
 def Show_Chompskis():
     print("age, name, height, weight, no. of teeth, swarm_id")
     mycursor.execute("SELECT * FROM Gnome_Chompskis")
@@ -123,7 +129,7 @@ def Create_Tables():
     mycursor.execute("ALTER TABLE Word ADD CONSTRAINT FK_Word_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
     mycursor.execute("ALTER TABLE Word_Definition ADD CONSTRAINT FK_WordDef_Word FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)")
     mycursor.execute("ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_User FOREIGN KEY (user_id) REFERENCES Users(USER_ID)")
-    
+
     print("Tables created")
 
 def Create_Tables_Reference():

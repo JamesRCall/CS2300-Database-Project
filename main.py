@@ -1,5 +1,5 @@
 # This is just a snippet of the real code base. It will not run as is.
-import Queries as sq
+import queries as sq
 import time
 import os
 
