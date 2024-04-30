@@ -16,8 +16,15 @@ def Sinput(text: str):
         quit()
     return x
 
-def menu():
-    User_ID = start()
+def menu(User_ID = None): 
+    if not hasattr(menu, "counter"):
+        menu.counter = 0 
+    menu.counter += 1
+    if menu.counter == 1:
+        User_ID = start()
+        menu.User_ID = User_ID
+    else:
+        User_ID = menu.User_ID
     mycursor.execute("SELECT authorization FROM Users WHERE User_ID = %s", (User_ID,))
     user = mycursor.fetchone()
     authorization, = user
@@ -27,9 +34,10 @@ def menu():
            2 Word & Definition Options
            3 Translation Options
            4 User Hub
-           5 Learn Hub""")
+           5 Learn Hub
+           6 Log Out""")
     if authorization == 'admin' or authorization == 'CEO':
-        print("\n6 Admin Panel")
+        print("\n7 Admin Panel")
         super_user = True
     choice = Sinput("Please select an option")
     if choice == '1':
@@ -42,7 +50,10 @@ def menu():
         User_Hub(User_ID)
     elif choice == '5':
         Learn_Hub(User_ID)
-    elif choice == '6' and super_user == True:
+    elif choice == '6':
+        menu.counter = 0
+        menu()
+    elif choice == '7' and super_user == True:
         Admin_Panel(User_ID)
     else:
         print("Invalid input. Please try again.")
@@ -62,7 +73,7 @@ def Language_Hub(User_ID):
             print("")
             # TODO: Language_Search()
         elif choice == '3':
-            break
+            menu()
         else:
             print("Invalid input. Please try again.")
 
@@ -98,7 +109,7 @@ def Word_Hub(User_ID):
             print('')
             Word_Search()
         elif choice == '8':
-            break
+            menu()
         else:
             print("Invalid input. Please try again.")
 
@@ -122,7 +133,7 @@ def Translation_Hub(User_ID):
             word = Sinput("Enter the word to edit its translation:")
             edit_translation(word) 
         elif choice == '4':
-            break
+            menu()
         else:
             print("Invalid input. Please try again.")
 
@@ -152,7 +163,7 @@ def User_Hub(User_ID):
             language = Sinput("Enter the language to remove from your learning list:")
             # TODO: remove_user_language(User_ID, language)
         elif choice == '6':
-            break
+            menu()
         else:
             print("Invalid input. Please try again.")
 
@@ -194,7 +205,7 @@ def Learn_Hub(User_ID):
             print("")
             # TODO: edit_wordList(User_ID)
         elif choice == '9':
-            break
+            menu()
         else:
             print("Invalid input. Please try again.")
 
@@ -234,7 +245,7 @@ def Admin_Panel(User_ID):
             print('')
             # TODO: User_Search()
         elif choice == '9':
-            break
+            menu()
 
         else:
             print("Invalid input. Please try again.")
