@@ -1,5 +1,6 @@
 import mysql.connector
 from enum import Enum
+import random
 
 db = mysql.connector.connect(
     host= "localhost",
@@ -168,9 +169,9 @@ def Learn_Hub(User_ID):
     while True:
         choice = Sinput("""
         Learn Hub:
-        1. Review Learned Words # TODO
-        2. Practice New Vocabulary # TODO
-        3. Track Learning Progress # TODO
+        1. Review Learned Words
+        2. Practice New Vocabulary
+        3. Track Learning Progress
         4. Make a Word List
         5. Add words to Word List
         6. Remove words from Word List
@@ -179,14 +180,11 @@ def Learn_Hub(User_ID):
         9. Go Back
         Choose an option""")
         if choice == '1':
-            print("")
-            # TODO: review_learned_words(User_ID)
+            review_learned_words(User_ID)
         elif choice == '2':
-            print("")
-            # TODO: practice_new_vocabulary(User_ID)
+            practice_new_vocabulary(User_ID)
         elif choice == '3':
-            print("")
-            # TODO: track_learning_progress(User_ID)
+            track_learning_progress(User_ID)
         elif choice == '4':
             make_wordList(User_ID)
         elif choice == '5':
@@ -196,11 +194,9 @@ def Learn_Hub(User_ID):
             print("")
             # TODO: remove_word_from_list(User_ID, Word_List)
         elif choice == '7':
-            print("")
-            # TODO: delete_wordList(User_ID)
+            delete_wordList(User_ID)
         elif choice == '8':
-            print("")
-            # TODO: edit_wordList(User_ID)
+            edit_wordList(User_ID)
         elif choice == '9':
             menu()
         else:
@@ -687,9 +683,143 @@ TODO delete_wordList(User_ID): deletes an existing word list
 TODO edit_wordList(User_ID): edits an existing word list
 
 """
-def review_learned_words(User_ID): # TODO
-    print("Not implemented yet.")
-    return
+def generate_language_questions(user_id, list_id):
+    # Step 1: Fetch 10 random translations related to the user's selected word list
+    mycursor.execute("""
+        SELECT t.Word_ID, t.Translated_Text, t.Language_ID, t.Word_Language
+        FROM Translation t
+        JOIN Words_In_List wil ON t.Word_ID = wil.Word_ID
+        WHERE wil.List_ID = %s
+        ORDER BY RAND() LIMIT 10
+    """, (list_id,))
+    translations = mycursor.fetchall()
+
+    # Step 2: Fetch the user's known and learning languages
+    mycursor.execute("""
+        SELECT primary_language, translated_language
+        FROM Word_List
+        WHERE List_ID = %s AND User_ID = %s
+    """, (list_id, user_id))
+    language_settings = mycursor.fetchone()
+    known_language = language_settings[0]
+    learning_language = language_settings[1]
+
+    # Step 3: Decide the question type and language for each translation
+    questions = []
+    for translation in translations:
+        question_type = 'multiple choice' if random.choice([True, False]) else 'written'
+        question_language_choice = random.choice([True, False])  # True for known language, False for learning language
+
+        # Generate the question and answer setup
+        questions.append({
+            'word_id': translation[0],
+            'text': translation[1],
+            'language_id': translation[2],
+            'word_language_id': translation[3],
+            'type': question_type,
+            'question_language': known_language if question_language_choice else learning_language,
+            'answer_language': learning_language if question_language_choice else known_language
+        })
+
+    return questions
+
+def format_written_question(question):
+    mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
+    original_text = mycursor.fetchone()[0]
+
+    if question['question_language'] == 'known':
+        prompt = f"What is the translation for '{original_text}' in the learning language?"
+    else:
+        prompt = f"What is the translation for '{question['text']}' in your known language?"
+
+    return {
+        'type': 'written',
+        'prompt': prompt,
+        'correct_answer': question['text']
+    }
+
+def format_multiple_choice_question(question):
+    # Fetch the original text of the word for the question
+    mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
+    original_text = mycursor.fetchone()[0]
+
+    # Determine which language ID to exclude in the incorrect options based on question setup
+    exclude_language_id = question['word_language_id'] if question['question_language'] == 'known' else question['language_id']
+
+    # Fetch three additional incorrect translations
+    mycursor.execute("""
+        SELECT Translated_Text FROM Translation
+        WHERE Word_ID != %s AND Language_ID = %s AND Word_Language != %s
+        ORDER BY RAND() LIMIT 3
+    """, (question['word_id'], question['language_id'], exclude_language_id))
+    incorrect_answers = [row[0] for row in mycursor.fetchall()]
+
+    # Mix the correct answer with incorrect ones
+    correct_answer = question['text'] if question['question_language'] == 'known' else original_text
+    options = [correct_answer] + incorrect_answers
+    random.shuffle(options)  # Shuffle to mix the correct answer among the incorrect ones
+
+    # Setting up the prompt based on the question language
+    prompt = f"What is the correct translation for '{original_text}' in the learning language?" if question['question_language'] == 'known' else f"What is the correct translation for '{question['text']}' in your known language?"
+
+    return {
+        'type': 'multiple choice',
+        'prompt': prompt,
+        'options': options,
+        'correct_answer': correct_answer
+    }
+
+
+
+def review_learned_words(user_id):
+    # Step 1: Fetch user's word lists and let them choose one
+    mycursor.execute("SELECT List_ID, List_Name FROM Word_List WHERE User_ID = %s", (user_id,))
+    word_lists = mycursor.fetchall()
+    if not word_lists:
+        print("No word lists found for this user.")
+        return
+
+    # Display word lists to the user
+    print("Please select a word list to review:")
+    for i, (list_id, list_name) in enumerate(word_lists, start=1):
+        print(f"{i}. {list_name}")
+    choice = int(input("Enter your choice: "))
+    selected_list_id = word_lists[choice - 1][0]
+
+    # Step 2: Generate questions for the selected list
+    questions = generate_language_questions(user_id, selected_list_id)
+
+    # Step 3: Present questions to the user and check answers
+    for question in questions:
+        if question['type'] == 'written':
+            formatted_question = format_written_question(question)
+        else:
+            formatted_question = format_multiple_choice_question(question)
+
+        print(formatted_question['prompt'])
+        if 'options' in formatted_question:
+            for idx, option in enumerate(formatted_question['options'], start=1):
+                print(f"{idx}. {option}")
+            user_answer = int(input("Choose the correct answer (number): ")) - 1
+            user_answer = formatted_question['options'][user_answer]
+        else:
+            user_answer = input("Your answer: ")
+
+        if user_answer.lower() == formatted_question['correct_answer'].lower():
+            print("Correct!")
+            correct_answer_increment = 1
+        else:
+            print("Incorrect. The correct answer was:", formatted_question['correct_answer'])
+            correct_answer_increment = 0
+
+        # Step 4: Update the Correct_Amount in the database
+        mycursor.execute("""
+            INSERT INTO User_Learned_Words (User_ID, Word_ID, Correct_Amount)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE Correct_Amount = Correct_Amount + %s
+        """, (user_id, question['word_id'], correct_answer_increment, correct_answer_increment))
+
+    print(f"Review session completed.")
 
 def practice_new_vocabulary(User_ID): # TODO
     print("Not implemented yet.")
@@ -1015,21 +1145,80 @@ Create_Tables(): creates the database pretty much
 
 """
 def Create_Tables():
-    mycursor.execute("CREATE TABLE Users (User_ID int PRIMARY KEY NOT NULL AUTO_INCREMENT, phone_number VARCHAR(16), email VARCHAR(64) NOT NULL, first_name VARCHAR(64) NOT NULL, last_name VARCHAR(64) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('default', 'admin', 'CEO'), default_language VARCHAR(64), language_id int NOT NULL)")
-    mycursor.execute("CREATE TABLE Languages (language_id INTEGER PRIMARY KEY AUTO_INCREMENT, word_count INTEGER CHECK (word_count >= 0),language_name VARCHAR(64) NOT NULL)")
-    mycursor.execute("CREATE TABLE User_Selected_Languages (User_ID int, Selected_Languages VARCHAR(64) NOT NULL)")
-    mycursor.execute("CREATE TABLE Word (Word_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Text TEXT NOT NULL, language_id INTEGER)")
-    mycursor.execute("CREATE TABLE Word_Definition (Definition_id INTEGER PRIMARY KEY AUTO_INCREMENT, text TEXT NOT NULL, Word_ID INTEGER)")
-    mycursor.execute("CREATE TABLE Word_List (List_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Word_Count INTEGER CHECK (Word_Count >= 0), User_ID INTEGER, primary_language int NOT NULL, translated_language int NOT NULL")
-    mycursor.execute("CREATE TABLE Words_In_List(List_ID INTEGER, Word_ID INTEGER)")
-    mycursor.execute("CREATE TABLE Translation(Translation_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Word_ID INTEGER NOT NULL, Translated_Text VARCHAR(255) NOT NULL, FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID))")
-
-    mycursor.execute("ALTER TABLE Users ADD CONSTRAINT FK_User_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
-    mycursor.execute("ALTER TABLE Word ADD CONSTRAINT FK_Word_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
-    mycursor.execute("ALTER TABLE Word_Definition ADD CONSTRAINT FK_WordDef_Word FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)")
-    mycursor.execute("ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_User FOREIGN KEY (User_ID) REFERENCES Users(User_ID)")
-    mycursor.execute("ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_Default FOREIGN KEY (primary_language) REFERENCES Users(language_id)")
-    mycursor.execute("ALTER TABLE Words_In_List ADD CONSTRAINT FK_Words_ListID FOREIGN KEY (List_ID) REFERENCES Word_List(List_ID)")
-    mycursor.execute("ALTER TABLE Words_In_List ADD CONSTRAINT FK_Words_WordID FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)")
-
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Users (
+            User_ID int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+            phone_number VARCHAR(16),
+            email VARCHAR(64) NOT NULL,
+            first_name VARCHAR(64) NOT NULL,
+            last_name VARCHAR(64) NOT NULL,
+            password VARCHAR(50) NOT NULL,
+            authorization ENUM('default', 'admin', 'CEO'),
+            default_language VARCHAR(64),
+            language_id int NOT NULL,
+            FOREIGN KEY (language_id) REFERENCES Languages(language_id)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Languages (
+            language_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            word_count INTEGER DEFAULT 0,
+            language_name VARCHAR(64) NOT NULL
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS User_Selected_Languages (
+            User_ID int,
+            Selected_Languages VARCHAR(64) NOT NULL,
+            FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Word (
+            Word_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
+            Text TEXT NOT NULL,
+            language_id INTEGER,
+            FOREIGN KEY (language_id) REFERENCES Languages(language_id)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Word_Definition (
+            Definition_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            text TEXT NOT NULL,
+            Word_ID INTEGER,
+            FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Word_List (
+            List_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
+            List_Name VARCHAR(64) NOT NULL,
+            User_ID INTEGER NOT NULL,
+            word_count INTEGER DEFAULT 0,
+            Difficulty VARCHAR(64) DEFAULT 'Medium',
+            primary_language int NOT NULL,
+            translated_language int NOT NULL,
+            FOREIGN KEY (User_ID) REFERENCES Users(User_ID),
+            FOREIGN KEY (primary_language) REFERENCES Languages(language_id),
+            FOREIGN KEY (translated_language) REFERENCES Languages(language_id)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Words_In_List (
+            List_ID INTEGER,
+            Word_ID INTEGER,
+            FOREIGN KEY (List_ID) REFERENCES Word_List(List_ID),
+            FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID),
+            PRIMARY KEY (List_ID, Word_ID)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Translation (
+            Translation_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
+            Word_ID INTEGER NOT NULL,
+            Translated_Text VARCHAR(255) NOT NULL,
+            FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)
+        );
+    """)
     print("Tables created")
+

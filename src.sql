@@ -73,9 +73,11 @@ CREATE TABLE User_Learned_Words (
 CREATE TABLE IF NOT EXISTS Translation (
     Translation_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
     Word_ID INTEGER NOT NULL,
+    Word_Language INTEGER NOT NULL,
     Language_ID INTEGER NOT NULL,
     Translated_Text VARCHAR(255) NOT NULL,
     FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID),
+    FOREIGN KEY (Word_Language) REFERENCES Languages(language_id),
     FOREIGN KEY (Language_ID) REFERENCES Languages(language_id)
 );
 
@@ -135,39 +137,3 @@ END;
 
 -- Resetting the delimiter to the default
 DELIMITER ;
-
-
--- Insert initial data (ensure this table name matches your schema)
-INSERT INTO Languages VALUES(1, 0, 'English');
-INSERT INTO Languages (word_count, language_name) VALUES (0, 'French');
-INSERT INTO Languages (word_count, language_name) VALUES (0, 'Spanish');
-INSERT INTO Languages (word_count, language_name) VALUES (0, 'German');
-INSERT INTO Languages (word_count, language_name) VALUES (0, 'Japanese');
-
-INSERT INTO Users VALUES (1, '111-222-3333', 'john_appleseed@gmail.com', 'John', 'Appleseed', 'no', 'default', 'English', 1);
-INSERT INTO Users (phone_number, email, first_name, last_name, password, authorization, default_language, language_id) 
-VALUES ('222-333-4444', 'alice_wonderland@example.com', 'Alice', 'Wonderland', 'secret', 'user', 'French', 2);
-
-INSERT INTO Users (phone_number, email, first_name, last_name, password, authorization, default_language, language_id) 
-VALUES ('333-444-5555', 'admin', 'Bob', 'Builder', 'root', 'admin', 'Spanish', 3);
-
-INSERT INTO User_Selected_Languages (User_ID, Selected_Languages) VALUES (1, 'French');
-INSERT INTO User_Selected_Languages (User_ID, Selected_Languages) VALUES (2, 'English');
-
-INSERT INTO Word (Text, language_id) VALUES ('Hello', 1);
-INSERT INTO Word (Text, language_id) VALUES ('Bonjour', 2);
-INSERT INTO Word (Text, language_id) VALUES ('Hola', 3);
-
-INSERT INTO Word_Definition (text, Word_ID) VALUES ('A greeting', 1);
-INSERT INTO Word_Definition (text, Word_ID) VALUES ('Salutation en français', 2);
-
-INSERT INTO Word_List (List_Name, Word_Count, User_ID, primary_language, translated_language) VALUES ('Daily Words', 2, 1, 1, 2);
-INSERT INTO Word_List (List_Name, Word_Count, User_ID, primary_language, translated_language) VALUES ('Construction Terms', 1, 2, 3, 1);
-
-INSERT INTO Words_In_List (List_ID, Word_ID) VALUES (1, 1);
-INSERT INTO Words_In_List (List_ID, Word_ID) VALUES (1, 2);
-INSERT INTO Words_In_List (List_ID, Word_ID) VALUES (2, 3);
-
-INSERT INTO Translation (Word_ID, Translated_Text, Language_ID) VALUES (1, 'Bonjour', 2);
-INSERT INTO Translation (Word_ID, Translated_Text, Language_ID) VALUES (2, 'Hello', 1);
-
