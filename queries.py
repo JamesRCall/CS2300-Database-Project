@@ -149,13 +149,10 @@ def User_Hub(User_ID):
         6. Go Back
         Choose an option""")
         if choice == '1':
-            print("")
-            # TODO: View_Profile(User_ID)
+            View_Profile(User_ID)
         elif choice == '2':
-            print("")
-            # TODO: edit_user_settings(User_ID)
+            edit_user_settings(User_ID)
         elif choice == '3':
-            print("")
             show_user_languages(User_ID)
         elif choice == '4':
             Choose_Language(User_ID)
