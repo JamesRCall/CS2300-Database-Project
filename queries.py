@@ -233,13 +233,10 @@ def Admin_Panel(User_ID):
         elif choice == '5':
             Add_User(True)
         elif choice == '6':
-            print('')
             Delete_User()
         elif choice == '7':
-            print('')
             Edit_User()
         elif choice == '8':
-            print('')
             User_Search()
         elif choice == '9':
             menu()
