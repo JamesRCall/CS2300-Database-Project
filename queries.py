@@ -417,40 +417,55 @@ def Add_word():
     else: 
         Add_definition(word_id)
 
-def Delete_word():
+def delete_word():
     while True:
-        text = input("Enter the word you want to delete: ")
-        mycursor.execute("SELECT * FROM Word WHERE Text = %s", (text,))
+        text = Sinput("Enter the word you want to delete")
+        mycursor.execute("SELECT Word_ID FROM Word WHERE Text = %s", (text,))
         word = mycursor.fetchone()
         if word:
             word_id = word[0]
-            language_id = word[2]
             try:
-                mycursor.execute("DELETE FROM Word WHERE WordID = %s", (word_id,))
-                mycursor.execute("UPDATE Languages SET word_count = word_count - 1 WHERE language_id = %s", (language_id,))
+                # Delete from Translation where the word is used
+                mycursor.execute("DELETE FROM Translation WHERE Word_ID = %s", (word_id,))
+                
+                # Delete from Words_In_List where the word is used
+                mycursor.execute("DELETE FROM Words_In_List WHERE Word_ID = %s", (word_id,))
+                
+                # Delete from Word_Definition where the word is defined
+                mycursor.execute("DELETE FROM Word_Definition WHERE Word_ID = %s", (word_id,))
+                
+                # Delete from User_Learned_Words where the word is learned
+                mycursor.execute("DELETE FROM User_Learned_Words WHERE Word_ID = %s", (word_id,))
+                
+                # Finally, delete the word itself
+                mycursor.execute("DELETE FROM Word WHERE Word_ID = %s", (word_id,))
+                
                 db.commit()
                 print("Word deleted successfully!")
                 break
             except mysql.connector.Error as err:
                 print("Error deleting word:", err)
+                db.rollback()
         else:
             print("Word not found. Please enter a valid word.")
-def Edit_word():
+
+def edit_word():
     while True:
         old_text = input("Enter the word you want to edit: ")
-        mycursor.execute("SELECT * FROM Word WHERE Text = %s", (old_text,))
+        mycursor.execute("SELECT Word_ID FROM Word WHERE Text = %s", (old_text,))
         word = mycursor.fetchone()
         if word:
-            word_id = word[0]
-            language_id = word[2]
+            word_id = word[0]  # Assuming the correct column index for Word_ID
             new_text = input("Enter the new text for the word: ")
             try:
-                mycursor.execute("UPDATE Word SET Text = %s WHERE WordID = %s", (new_text, word_id))
+                # Ensure the column name in SQL is correct as per your schema; it should likely be `Word_ID`, not `WordID`
+                mycursor.execute("UPDATE Word SET Text = %s WHERE Word_ID = %s", (new_text, word_id))
                 db.commit()
                 print("Word edited successfully!")
-                break
+                return  # Use return instead of break to exit the function after successful operation
             except mysql.connector.Error as err:
                 print("Error editing word:", err)
+                db.rollback()  # Roll back the transaction on error
         else:
             print("Word not found. Please enter a valid word.")
 
