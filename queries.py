@@ -715,8 +715,6 @@ TODO edit_wordList(User_ID): edits an existing word list
 
 """
 def generate_language_questions(user_id, list_id):
-    print(f"Fetching translations for list ID {list_id} and user ID {user_id}")
-    
     # This query fetches translations that are specific to the word list's target language
     mycursor.execute("""
         SELECT t.Word_ID, t.Translated_Text, t.Language_ID, t.Word_Language, w.Text AS Original_Text
@@ -728,7 +726,6 @@ def generate_language_questions(user_id, list_id):
         ORDER BY RAND() LIMIT 10
     """, (list_id,))
     translations = mycursor.fetchall()
-    print(f"Translations fetched: {translations}")
 
     # Fetching language settings including names for better clarity in question prompts
     mycursor.execute("""
@@ -743,7 +740,6 @@ def generate_language_questions(user_id, list_id):
     learning_language = language_settings[1]
     known_language_name = language_settings[2]
     translated_language_name = language_settings[3]
-    print(f"Language settings fetched: Known language - {known_language_name}, Learning language - {translated_language_name}")
 
     questions = []
     for translation in translations:
@@ -766,7 +762,6 @@ def generate_language_questions(user_id, list_id):
             'translated_language_name': translated_language_name
         })
 
-    print(f"Questions generated: {questions}")
     return questions
 
 
@@ -789,37 +784,38 @@ def format_written_question(question):
     }
 
 def format_multiple_choice_question(question):
-    # Fetch the original text of the word for the question
-    mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
-    original_text = mycursor.fetchone()[0]
+    original_text = question['original_text']
 
-    # Determine which language ID to use for fetching incorrect translations
+    # Determine target language ID for fetching incorrect translations
     target_language_id = question['translated_language'] if question['question_language'] == question['known_language'] else question['known_language']
 
-    # Ensure incorrect answers are fetched only from translations in the target language and are not duplicates of the correct answer
-    mycursor.execute("""
-        SELECT Translated_Text FROM Translation
-        WHERE Word_ID != %s AND Language_ID = %s AND Translated_Text != %s
-        ORDER BY RAND() LIMIT 3
-    """, (question['word_id'], target_language_id, question['translated_text']))
-    incorrect_answers = [row[0] for row in mycursor.fetchall()]
-
-    # Add additional filtering step if unique answers are insufficient
-    if len(set(incorrect_answers)) < 3:  # If fewer than 3 unique answers
-        # Fetch alternative incorrect answers excluding any that match the correct answer
+    if question['question_language'] == question['known_language']:
+        # Fetch incorrect answers that are also translated texts from known to learning language
         mycursor.execute("""
-            SELECT Translated_Text FROM Translation
-            WHERE Translated_Text != %s AND Language_ID = %s
-            ORDER BY RAND() LIMIT 3
-        """, (question['translated_text'], target_language_id))
-        incorrect_answers = [row[0] for row in mycursor.fetchall()]
+            SELECT DISTINCT Translated_Text FROM Translation
+            WHERE Word_ID != %s AND Language_ID = %s AND Translated_Text != %s
+            ORDER BY RAND() LIMIT 10
+        """, (question['word_id'], question['translated_language'], question['translated_text']))
+    else:
+        # Fetch incorrect answers that are original texts in the known language
+        mycursor.execute("""
+            SELECT DISTINCT Text FROM Word
+            WHERE Word_ID != %s AND language_id = %s AND Text != %s
+            ORDER BY RAND() LIMIT 10
+        """, (question['word_id'], question['known_language'], original_text))
 
-    # Include the correct answer and shuffle the options
+    all_possible_incorrects = [row[0] for row in mycursor.fetchall()]
+
+    # Ensure there are enough unique incorrect answers
+    incorrect_answers = list(set(all_possible_incorrects))[:3]
+    if len(incorrect_answers) < 3:
+        incorrect_answers += ["Incorrect 1", "Incorrect 2", "Incorrect 3"][:3 - len(incorrect_answers)]
+
     correct_answer = question['translated_text'] if question['question_language'] == question['known_language'] else original_text
     options = [correct_answer] + incorrect_answers
     random.shuffle(options)
 
-    # Create prompt depending on question language
+    # Create a prompt based on the question's language direction
     prompt = f"What is the correct translation for '{original_text}' in the {question['translated_language_name']}?" if question['question_language'] == question['known_language'] else f"What is the correct translation for '{question['translated_text']}' in the {question['known_language_name']}?"
 
     return {
