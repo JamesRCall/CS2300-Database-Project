@@ -1,5 +1,6 @@
 import mysql.connector
 from enum import Enum
+import random
 
 db = mysql.connector.connect(
     host= "localhost",
@@ -30,14 +31,14 @@ def menu(User_ID = None):
     authorization, = user
     super_user = False
     print("""
-           1 Language Options
-           2 Word & Definition Options
-           3 Translation Options
-           4 User Hub
-           5 Learn Hub
-           6 Log Out""")
+    1 Language Options
+    2 Word & Definition Options
+    3 Translation Options
+    4 User Hub
+    5 Learn Hub
+    6 Log Out""")
     if authorization == 'admin' or authorization == 'CEO':
-        print("\n7 Admin Panel")
+        print("""    7 Admin Panel""")
         super_user = True
     choice = Sinput("Please select an option")
     if choice == '1':
@@ -95,10 +96,10 @@ def Word_Hub(User_ID):
             Add_word()
         elif choice == '2':
             word = Sinput("Enter the word to delete:")
-            # TODO: delete_word(word)
+            Delete_word(word)
         elif choice == '3':
             word = Sinput("Enter the word to edit:")
-            # TODO: edit_word(word)
+            Edit_word(word)
         elif choice == '4':
             Add_definition()
         elif choice == '5':
@@ -149,19 +150,16 @@ def User_Hub(User_ID):
         6. Go Back
         Choose an option""")
         if choice == '1':
-            print("")
-            # TODO: View_Profile(User_ID)
+            View_Profile(User_ID)
         elif choice == '2':
-            print("")
-            # TODO: edit_user_settings(User_ID)
+            edit_user_settings(User_ID)
         elif choice == '3':
-            print("")
-            # TODO: show_user_languages(User_ID)
+            show_user_languages(User_ID)
         elif choice == '4':
             Choose_Language(User_ID)
         elif choice == '5':
             language = Sinput("Enter the language to remove from your learning list:")
-            # TODO: remove_user_language(User_ID, language)
+            remove_user_language(User_ID, language)
         elif choice == '6':
             menu()
         else:
@@ -171,9 +169,9 @@ def Learn_Hub(User_ID):
     while True:
         choice = Sinput("""
         Learn Hub:
-        1. Review Learned Words # TODO
-        2. Practice New Vocabulary # TODO
-        3. Track Learning Progress # TODO
+        1. Review Learned Words
+        2. Practice New Vocabulary
+        3. Track Learning Progress
         4. Make a Word List
         5. Add words to Word List
         6. Remove words from Word List
@@ -182,14 +180,11 @@ def Learn_Hub(User_ID):
         9. Go Back
         Choose an option""")
         if choice == '1':
-            print("")
-            # TODO: review_learned_words(User_ID)
+            review_learned_words(User_ID)
         elif choice == '2':
-            print("")
-            # TODO: practice_new_vocabulary(User_ID)
+            practice_new_vocabulary(User_ID)
         elif choice == '3':
-            print("")
-            # TODO: track_learning_progress(User_ID)
+            track_learning_progress(User_ID)
         elif choice == '4':
             make_wordList(User_ID)
         elif choice == '5':
@@ -199,11 +194,9 @@ def Learn_Hub(User_ID):
             print("")
             # TODO: remove_word_from_list(User_ID, Word_List)
         elif choice == '7':
-            print("")
-            # TODO: delete_wordList(User_ID)
+            delete_wordList(User_ID)
         elif choice == '8':
-            print("")
-            # TODO: edit_wordList(User_ID)
+            edit_wordList(User_ID)
         elif choice == '9':
             menu()
         else:
@@ -227,23 +220,20 @@ def Admin_Panel(User_ID):
             Add_language()
         elif choice == '2':
             language = Sinput("Enter the language to delete:")
-            # TODO: delete_language(language)
+            delete_Language(language)
         elif choice == '3':
             language = Sinput("Enter the language to edit:")
-            # TODO: edit_language(language)
+            Edit_Language(language)
         elif choice == '4':
             Show_Users()
         elif choice == '5':
             Add_User(True)
         elif choice == '6':
-            print('')
-            # TODO: Delete_User()
+            Delete_User()
         elif choice == '7':
-            print('')
-            # TODO: Edit_User()
+            Edit_User()
         elif choice == '8':
-            print('')
-            # TODO: User_Search()
+            User_Search()
         elif choice == '9':
             menu()
 
@@ -472,18 +462,30 @@ def Add_definition(word_id: int = None):
        db.commit()
 
 def Modify_Definition():
-    word_definition = input("Enter the definition completely: ")
-    # NOTE: Might want to change logic to list defintions of a word and choose based on definition id?
-    mycursor.execute("SELECT Definition_id FROM Word_definition WHERE text=%s", (word_definition,))
-    definition_id = mycursor.fetchone()
-    if definition_id is not None:
-      definition_id = definition_id[0]
-      new_definition = input("Enter the new definition: ")
-      mycursor.execute("UPDATE Word_Definition SET text=%s WHERE Definition_id=%s", (new_definition,definition_id))
-      db.commit()
-      print("Definition changed successfully")
+    # CHANGE: User enters a word. The word's definition and definition id's are printed. User chooses the definition id
+    #         to modify
+    word_name = input("Enter the word that you want to modify its definition: ")
+    mycursor.execute("SELECT Word_ID FROM Word WHERE Text=%s", (word_name,))
+    word_id = mycursor.fetchone()
+    if word_id is not None:
+      word_id = word_id[0]
+      print("Definition ID, Definition")
+      mycursor.execute("SELECT Definition_id, text FROM Word_Definition WHERE Word_ID=%s", (word_id,))
+      for x in mycursor:
+        print(x)
+      definition_id = input("Enter the definition id to modify: ")
+      mycursor.execute("SELECT Definition_id FROM Word_Definition WHERE text=%s", (definition_id,))
+      definition_id = mycursor.fetchone()
+      if definition_id is not None:
+        definition_id = definition_id[0]
+        new_definition = input("Enter the new definition: ")
+        mycursor.execute("UPDATE Word_Definition SET text=%s WHERE Definition_id=%s", (new_definition,definition_id))
+        db.commit()
+        print("Definition changed successfully!")
+      else:
+        print("Definition id does not exist")
     else:
-      print("Entered definition does not exist")
+      print("Word does not exist")
     return
 
 def Delete_Definition():
@@ -492,9 +494,12 @@ def Delete_Definition():
     word_id = mycursor.fetchone()
     if word_id is not None:
       word_id = word_id[0]
-      word_definition = input("Enter the definition completely: ")
-      # NOTE: Might want to change logic to list defintions of a word and choose based on definition id?
-      mycursor.execute("SELECT Definition_id FROM Word_definition WHERE text=%s AND Word_ID=%s", (word_definition,word_id))
+      print("Definition ID, Definition")
+      mycursor.execute("SELECT Definition_id, text FROM Word_Definition WHERE Word_ID=%s", (word_id,))
+      for x in mycursor:
+        print(x)
+      definition_id = input("Enter the definition id to delete: ")
+      mycursor.execute("SELECT Definition_id FROM Word_definition WHERE Definition_id=%s AND Word_ID=%s", (definition_id,word_id))
       definition_id = mycursor.fetchone()
       if definition_id is not None:
         definition_id = definition_id[0]
@@ -506,30 +511,82 @@ def Delete_Definition():
     else:
       print("Word does not exist")
     return
+
 """______________________________TRANSLATION FUNCTIONS___________________________
-TODO add_translation(word)
-TODO delete_translation(word)
-TODO edit_translation(word)
+get_word_id(word): finds a words id given the text
+add_translation(word): adds a translation to a word given the words text
+delete_translation(word): deletes a word's translation given a words text
+edit_translation(word): edits a word's translation
 
 """
-def add_translation(word): # TODO
-    print("Not implemented yet.")
+def get_word_id(word):
+    mycursor.execute("SELECT Word_ID FROM Word WHERE Text=%s", (word,))
+    word_id = mycursor.fetchone()
+    if word_id is not None:
+      return word_id[0]
+    else:
+      return None
+    
+def add_translation(word):
+    word_id = get_word_id(word)
+    if word_id != None:
+      translated_text = input("Enter the translation: ")
+      mycursor.execute("INSERT INTO Translation (Word_ID, Translated_Text) VALUES (%s,%s)", (word_id,translated_text))
+      db.commit()
+      print("Translation added successfully!")
+    else:
+      print("Word does not exist")
     return
 
-def delete_translation(word): # TODO 
-    print("Not implemented yet.")
+def delete_translation(word): 
+    word_id = get_word_id(word)
+    if word_id != None:
+      print("Translation ID, Translated Text")
+      mycursor.execute("SELECT Translation_ID, Translated_Text FROM Translation WHERE Word_ID=%s", (word_id,))
+      for x in mycursor:
+        print(x)
+      translation_id = input("Enter the translation id to delete: ")
+      mycursor.execute("SELECT Translation_ID FROM Translation WHERE Translation_ID=%s AND Word_ID=%s", (translation_id,word_id))
+      translation_id = mycursor.fetchone()
+      if translation_id is not None:
+        translation_id = translation_id[0]
+        mycursor.execute("DELETE FROM Translation WHERE Translation_ID=%s", (translation_id,))
+        db.commit()
+        print("Translation deleted successfully!")
+      else:
+        print("Translation ID does not exist")
+    else:
+      print("Word does not exist")
     return
 
-def edit_translation(word): # TODO
-    print("Not implemented yet.")
+def edit_translation(word):
+    word_id = get_word_id(word)
+    if word_id != None:
+      print("Translation ID, Translated Text")
+      mycursor.execute("SELECT Translation_ID, Translated_Text FROM Translation WHERE Word_ID=%s", (word_id,))
+      for x in mycursor:
+        print(x)
+      translation_id = input("Enter the translation id to edit: ")
+      mycursor.execute("SELECT Translation_ID FROM Translation WHERE Translation_ID=%s AND Word_ID=%s", (translation_id,word_id))
+      translation_id = mycursor.fetchone()
+      if translation_id is not None:
+        translation_id = translation_id[0]
+        new_translation = input("Enter the new translation: ")
+        mycursor.execute("UPDATE Translation SET Translated_Text=%s WHERE Translation_ID=%s", (new_translation,translation_id,))
+        db.commit()
+        print("Translation edited successfully!")
+      else:
+        print("Translation ID does not exist")
+    else:
+      print("Word does not exist")
     return
 
 """_______________________________USER FUNCTIONS_________________________________
 TODO View_Profile(User_ID): views users profile
 TODO edit_user_settings(User_ID): edits users settings
-TODO show_user_languages(User_ID): shows all languages user is learning
+show_user_languages(User_ID): shows all languages user is learning
 Choose_Language(User_ID): assigns a new language to user to learn
-TODO remove_user_language(User_ID, language): removes a language from users list being learned
+remove_user_language(User_ID, language): removes a language from users list being learned
 
 """
 
@@ -541,9 +598,25 @@ def edit_user_settings(User_ID): # TODO
     print("Not implemented yet.")
     return
 
-def show_user_languages(User_ID): # TODO
-    print("Not implemented yet.")
-    return
+def show_user_languages(User_ID):
+    # Fetch the default language using the language_id foreign key in Users table
+    mycursor.execute("SELECT language_name FROM Languages JOIN Users ON Languages.language_id = Users.language_id WHERE Users.User_ID = %s", (User_ID,))
+    default_language = mycursor.fetchone()
+    if default_language:
+        print(f"Default Language for User ID {User_ID}: {default_language[0]}")
+    else:
+        print("Default language not found for this user.")
+    
+    # Fetch selected languages from User_Selected_Languages table
+    mycursor.execute("SELECT Selected_Languages FROM User_Selected_Languages WHERE User_ID = %s", (User_ID,))
+    selected_languages = mycursor.fetchall()
+    if selected_languages:
+        print(f"Selected Languages for User ID {User_ID}:")
+        for language in selected_languages:
+            print(language[0])
+    else:
+        print("No additional selected languages found for this user.")
+
 
 def Choose_Language(User_ID: int):
     while True:  # Use 'while True' for clearer looping intent
@@ -581,9 +654,23 @@ def Choose_Language(User_ID: int):
 
     return
 
-def remove_user_language(User_ID, language): # TODO
-    print("Not implemented yet.")
-    return
+def remove_user_language(User_ID, language):
+    try:
+        # First, check if the language is actually selected by the user
+        mycursor.execute("SELECT * FROM User_Selected_Languages WHERE User_ID = %s AND Selected_Languages = %s", (User_ID, language))
+        if not mycursor.fetchone():
+            print(f"The language '{language}' is not selected by User ID {User_ID}.")
+            return
+
+        # Remove the language from the User_Selected_Languages table
+        mycursor.execute("DELETE FROM User_Selected_Languages WHERE User_ID = %s AND Selected_Languages = %s", (User_ID, language))
+        db.commit()
+        print(f"The language '{language}' has been successfully removed from User ID {User_ID}'s selected languages.")
+
+    except mysql.connector.Error as err:
+        print(f"Error removing the language: {err}")
+        db.rollback()
+
 
 """________________________LEARN FUNCTIONS_____________________________
 TODO review_learned_words(User_ID): lets user practice words already learned (should give user the word in their language and ask them for the translated word, have them try again till they get it right or press show answer)
@@ -596,9 +683,143 @@ TODO delete_wordList(User_ID): deletes an existing word list
 TODO edit_wordList(User_ID): edits an existing word list
 
 """
-def review_learned_words(User_ID): # TODO
-    print("Not implemented yet.")
-    return
+def generate_language_questions(user_id, list_id):
+    # Step 1: Fetch 10 random translations related to the user's selected word list
+    mycursor.execute("""
+        SELECT t.Word_ID, t.Translated_Text, t.Language_ID, t.Word_Language
+        FROM Translation t
+        JOIN Words_In_List wil ON t.Word_ID = wil.Word_ID
+        WHERE wil.List_ID = %s
+        ORDER BY RAND() LIMIT 10
+    """, (list_id,))
+    translations = mycursor.fetchall()
+
+    # Step 2: Fetch the user's known and learning languages
+    mycursor.execute("""
+        SELECT primary_language, translated_language
+        FROM Word_List
+        WHERE List_ID = %s AND User_ID = %s
+    """, (list_id, user_id))
+    language_settings = mycursor.fetchone()
+    known_language = language_settings[0]
+    learning_language = language_settings[1]
+
+    # Step 3: Decide the question type and language for each translation
+    questions = []
+    for translation in translations:
+        question_type = 'multiple choice' if random.choice([True, False]) else 'written'
+        question_language_choice = random.choice([True, False])  # True for known language, False for learning language
+
+        # Generate the question and answer setup
+        questions.append({
+            'word_id': translation[0],
+            'text': translation[1],
+            'language_id': translation[2],
+            'word_language_id': translation[3],
+            'type': question_type,
+            'question_language': known_language if question_language_choice else learning_language,
+            'answer_language': learning_language if question_language_choice else known_language
+        })
+
+    return questions
+
+def format_written_question(question):
+    mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
+    original_text = mycursor.fetchone()[0]
+
+    if question['question_language'] == 'known':
+        prompt = f"What is the translation for '{original_text}' in the learning language?"
+    else:
+        prompt = f"What is the translation for '{question['text']}' in your known language?"
+
+    return {
+        'type': 'written',
+        'prompt': prompt,
+        'correct_answer': question['text']
+    }
+
+def format_multiple_choice_question(question):
+    # Fetch the original text of the word for the question
+    mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
+    original_text = mycursor.fetchone()[0]
+
+    # Determine which language ID to exclude in the incorrect options based on question setup
+    exclude_language_id = question['word_language_id'] if question['question_language'] == 'known' else question['language_id']
+
+    # Fetch three additional incorrect translations
+    mycursor.execute("""
+        SELECT Translated_Text FROM Translation
+        WHERE Word_ID != %s AND Language_ID = %s AND Word_Language != %s
+        ORDER BY RAND() LIMIT 3
+    """, (question['word_id'], question['language_id'], exclude_language_id))
+    incorrect_answers = [row[0] for row in mycursor.fetchall()]
+
+    # Mix the correct answer with incorrect ones
+    correct_answer = question['text'] if question['question_language'] == 'known' else original_text
+    options = [correct_answer] + incorrect_answers
+    random.shuffle(options)  # Shuffle to mix the correct answer among the incorrect ones
+
+    # Setting up the prompt based on the question language
+    prompt = f"What is the correct translation for '{original_text}' in the learning language?" if question['question_language'] == 'known' else f"What is the correct translation for '{question['text']}' in your known language?"
+
+    return {
+        'type': 'multiple choice',
+        'prompt': prompt,
+        'options': options,
+        'correct_answer': correct_answer
+    }
+
+
+
+def review_learned_words(user_id):
+    # Step 1: Fetch user's word lists and let them choose one
+    mycursor.execute("SELECT List_ID, List_Name FROM Word_List WHERE User_ID = %s", (user_id,))
+    word_lists = mycursor.fetchall()
+    if not word_lists:
+        print("No word lists found for this user.")
+        return
+
+    # Display word lists to the user
+    print("Please select a word list to review:")
+    for i, (list_id, list_name) in enumerate(word_lists, start=1):
+        print(f"{i}. {list_name}")
+    choice = int(input("Enter your choice: "))
+    selected_list_id = word_lists[choice - 1][0]
+
+    # Step 2: Generate questions for the selected list
+    questions = generate_language_questions(user_id, selected_list_id)
+
+    # Step 3: Present questions to the user and check answers
+    for question in questions:
+        if question['type'] == 'written':
+            formatted_question = format_written_question(question)
+        else:
+            formatted_question = format_multiple_choice_question(question)
+
+        print(formatted_question['prompt'])
+        if 'options' in formatted_question:
+            for idx, option in enumerate(formatted_question['options'], start=1):
+                print(f"{idx}. {option}")
+            user_answer = int(input("Choose the correct answer (number): ")) - 1
+            user_answer = formatted_question['options'][user_answer]
+        else:
+            user_answer = input("Your answer: ")
+
+        if user_answer.lower() == formatted_question['correct_answer'].lower():
+            print("Correct!")
+            correct_answer_increment = 1
+        else:
+            print("Incorrect. The correct answer was:", formatted_question['correct_answer'])
+            correct_answer_increment = 0
+
+        # Step 4: Update the Correct_Amount in the database
+        mycursor.execute("""
+            INSERT INTO User_Learned_Words (User_ID, Word_ID, Correct_Amount)
+            VALUES (%s, %s, %s)
+            ON DUPLICATE KEY UPDATE Correct_Amount = Correct_Amount + %s
+        """, (user_id, question['word_id'], correct_answer_increment, correct_answer_increment))
+
+    print(f"Review session completed.")
 
 def practice_new_vocabulary(User_ID): # TODO
     print("Not implemented yet.")
@@ -661,13 +882,13 @@ def edit_wordList(User_ID):  # TODO
 
 """________________________ADMIN FUNCTIONS_________________________________
 Add_language(): adds a new language to sql database
-TODO delete_Language(language): deletes an existing language will need to also delete all words in that language, and the words translations and definitions
-TODO Edit_Language(language): edits an existing language
+delete_Language(language): deletes an existing language will need to also delete all words in that language, and the words translations and definitions
+Edit_Language(language): edits an existing language
 Show_Users(): shows a list of all users in database
 Add_User(admin,...): adds a new user to the sql database
-TODO Delete_User(): deletes an existing user from sql database, will also have to delete all the users word list
-TODO Edit_User(): edits an existing user
-TODO User_Search(): searches for user by id, name, or email
+Delete_User(): deletes an existing user from sql database, will also have to delete all the users word list
+Edit_User(): given a valid user id, allows user to edit any value of a user (other than User_ID)
+User_Search(): searches for user by id, name, or email
 
 """
 def Add_language():
@@ -687,13 +908,64 @@ def Add_language():
             print("Error: {}".format(err))
             return err
 
-def delete_Language(language):  # TODO
-    print("Not implemented yet.")
-    return
+def delete_Language(language):
+    # Start the transaction
+    db.start_transaction()
+    
+    try:
+        # Check if the language exists and get its ID
+        mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (language,))
+        language_id = mycursor.fetchone()
+        if not language_id:
+            print(f"No such language: {language}")
+            return
 
-def Edit_Language(language):  # TODO
-    print("Not implemented yet.")
-    return
+        # Get all words in this language
+        mycursor.execute("SELECT Word_ID FROM Word WHERE language_id = %s", (language_id,))
+        words = mycursor.fetchall()
+        
+        # Delete related entries from dependent tables
+        for word_id in words:
+            mycursor.execute("DELETE FROM Translation WHERE Word_ID = %s", (word_id,))
+            mycursor.execute("DELETE FROM Word_Definition WHERE Word_ID = %s", (word_id,))
+            mycursor.execute("DELETE FROM Words_In_List WHERE Word_ID = %s", (word_id,))
+            mycursor.execute("DELETE FROM Word WHERE Word_ID = %s", (word_id,))
+
+        # Finally, delete the language
+        mycursor.execute("DELETE FROM Languages WHERE language_id = %s", (language_id,))
+        
+        # Commit the transaction
+        db.commit()
+        print(f"Language '{language}' and all associated data have been deleted.")
+
+    except Exception as e:
+        # Rollback in case of any error
+        db.rollback()
+        print(f"Failed to delete language {language}: {e}")
+
+
+def Edit_Language(old_language_name, new_language_name):
+    try:
+        # Check if the old language exists
+        mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (old_language_name,))
+        if not mycursor.fetchone():
+            print(f"Language '{old_language_name}' does not exist.")
+            return
+
+        # Check if new language name already exists to avoid duplicates
+        mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (new_language_name,))
+        if mycursor.fetchone():
+            print(f"Language name '{new_language_name}' already exists. Please choose another name.")
+            return
+
+        # Update the language name
+        mycursor.execute("UPDATE Languages SET language_name = %s WHERE language_name = %s", (new_language_name, old_language_name))
+        db.commit()
+        print(f"Language name updated from '{old_language_name}' to '{new_language_name}'.")
+
+    except mysql.connector.Error as err:
+        print("Error: {}".format(err))
+
 
 def Show_Users():
     mycursor.execute("SELECT * FROM Users")
@@ -750,38 +1022,203 @@ def Add_User(admin: bool, phone_number: str = None, email: str = None, first_nam
        db.commit()
     return User_ID
 
-def Delete_User():  # TODO
-    print("Not implemented yet.")
-    return
+def Delete_User(user_id):
+    # Start transaction
+    db.start_transaction()
 
-def Edit_User():  # TODO
-    print("Not implemented yet.")
-    return
+    try:
+        # Delete entries from Words_In_List using Word_List linked to the User
+        mycursor.execute("DELETE Words_In_List FROM Words_In_List JOIN Word_List ON Words_In_List.List_ID = Word_List.List_ID WHERE Word_List.User_ID = %s", (user_id,))
 
-def User_Search():  # TODO
-    print("Not implemented yet.")
-    return
+        # Delete Word_List entries
+        mycursor.execute("DELETE FROM Word_List WHERE User_ID = %s", (user_id,))
+
+        # Finally, delete the user
+        mycursor.execute("DELETE FROM Users WHERE User_ID = %s", (user_id,))
+        
+        # Commit the transaction
+        db.commit()
+        print(f"User and all associated data have been deleted successfully.")
+
+    except Exception as e:
+        # Rollback in case of error
+        db.rollback()
+        print(f"Failed to delete user: {e}")
+
+
+def Edit_User():
+    user_id = input("Enter the User ID of the user you want to edit: ")
+    
+    # Fetch and display current user details for reference
+    mycursor.execute("SELECT * FROM Users WHERE User_ID = %s", (user_id,))
+    user_details = mycursor.fetchone()
+    if not user_details:
+        print("User not found.")
+        return
+
+    print(f"Current details of User ID {user_id}: {user_details}")
+    
+    print("Select the attribute you want to edit:")
+    print("1: Phone Number")
+    print("2: Email")
+    print("3: First Name")
+    print("4: Last Name")
+    print("5: Password")
+    print("6: Authorization")
+    print("7: Default Language")
+    print("8: Language ID")
+    
+    choice = int(input("Enter your choice (1-8): "))
+    if choice not in range(1, 9):
+        print("Invalid choice. Please enter a number between 1 and 8.")
+        return
+
+    new_value = input("Enter the new value for the selected attribute: ")
+
+    # Define SQL based on the choice
+    attributes = {
+        1: "phone_number",
+        2: "email",
+        3: "first_name",
+        4: "last_name",
+        5: "password",
+        6: "authorization",
+        7: "default_language",
+        8: "language_id"
+    }
+    attribute = attributes[choice]
+
+    # Update user details in the Users table
+    sql_update = f"UPDATE Users SET {attribute} = %s WHERE User_ID = %s"
+    mycursor.execute(sql_update, (new_value, user_id))
+    
+    # If the user changes the language_id, update the foreign key reference
+    if attribute == "language_id":
+        # Update any other tables that reference language_id as a foreign key
+        mycursor.execute("UPDATE Word_List SET primary_language = %s WHERE User_ID = %s", (new_value, user_id))
+
+    db.commit()
+    print(f"User ID {user_id} updated: {attribute} set to {new_value}.")
+
+def User_Search():
+    print("""Select the search criterion:)
+    1: Search by User ID
+    2: Search by Name
+    3: Search by Email""")
+    
+    try:
+        choice = int(input("Enter your choice (1, 2, or 3): "))
+        if choice not in [1, 2, 3]:
+            print("Invalid choice. Please enter 1, 2, or 3.")
+            return
+
+        search_term = input("Enter the search term: ")
+
+        if choice == 1:
+            # Search by User ID
+            mycursor.execute("SELECT User_ID, first_name, last_name, email FROM Users WHERE User_ID = %s", (search_term,))
+        elif choice == 2:
+            # Search by Name
+            mycursor.execute("""
+                SELECT User_ID, first_name, last_name, email FROM Users
+                WHERE first_name LIKE %s OR last_name LIKE %s
+            """, ('%' + search_term + '%', '%' + search_term + '%'))
+        elif choice == 3:
+            # Search by Email
+            mycursor.execute("SELECT User_ID, first_name, last_name, email FROM Users WHERE email LIKE %s", ('%' + search_term + '%',))
+
+        results = mycursor.fetchall()
+        if results:
+            for user in results:
+                print(f"ID: {user[0]}, Name: {user[1]} {user[2]}, Email: {user[3]}")
+        else:
+            print("No users found matching the search criteria.")
+
+    except ValueError:
+        print("Please enter a valid number for your choice.")
+    except mysql.connector.Error as err:
+        print(f"Error searching for users: {err}")
+
 
 """_____________________________________________SQL FUNCTIONS__________________________________________
 Create_Tables(): creates the database pretty much
 
 """
 def Create_Tables():
-    mycursor.execute("CREATE TABLE Users (User_ID int PRIMARY KEY NOT NULL AUTO_INCREMENT, phone_number VARCHAR(16), email VARCHAR(64) NOT NULL, first_name VARCHAR(64) NOT NULL, last_name VARCHAR(64) NOT NULL, password VARCHAR(50) NOT NULL, authorization ENUM('default', 'admin', 'CEO'), default_language VARCHAR(64), language_id int NOT NULL)")
-    mycursor.execute("CREATE TABLE Languages (language_id INTEGER PRIMARY KEY AUTO_INCREMENT, word_count INTEGER CHECK (word_count >= 0),language_name VARCHAR(64) NOT NULL)")
-    mycursor.execute("CREATE TABLE User_Selected_Languages (User_ID int, Selected_Languages VARCHAR(64) NOT NULL)")
-    mycursor.execute("CREATE TABLE Word (Word_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Text TEXT NOT NULL, language_id INTEGER)")
-    mycursor.execute("CREATE TABLE Word_Definition (Definition_id INTEGER PRIMARY KEY AUTO_INCREMENT, text TEXT NOT NULL, Word_ID INTEGER)")
-    mycursor.execute("CREATE TABLE Word_List (List_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Word_Count INTEGER CHECK (Word_Count >= 0), User_ID INTEGER, primary_language int NOT NULL, translated_language int NOT NULL")
-    mycursor.execute("CREATE TABLE Words_In_List(List_ID INTEGER, Word_ID INTEGER)")
-    mycursor.execute("CREATE TABLE Translation(Translation_ID INTEGER PRIMARY KEY AUTO_INCREMENT, Word_ID INTEGER NOT NULL, Translated_Text VARCHAR(255) NOT NULL, FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID))")
-
-    mycursor.execute("ALTER TABLE Users ADD CONSTRAINT FK_User_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
-    mycursor.execute("ALTER TABLE Word ADD CONSTRAINT FK_Word_Language FOREIGN KEY (language_id) REFERENCES Languages(language_id)")
-    mycursor.execute("ALTER TABLE Word_Definition ADD CONSTRAINT FK_WordDef_Word FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)")
-    mycursor.execute("ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_User FOREIGN KEY (User_ID) REFERENCES Users(User_ID)")
-    mycursor.execute("ALTER TABLE Word_List ADD CONSTRAINT FK_WordList_Default FOREIGN KEY (primary_language) REFERENCES Users(language_id)")
-    mycursor.execute("ALTER TABLE Words_In_List ADD CONSTRAINT FK_Words_ListID FOREIGN KEY (List_ID) REFERENCES Word_List(List_ID)")
-    mycursor.execute("ALTER TABLE Words_In_List ADD CONSTRAINT FK_Words_WordID FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)")
-
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Users (
+            User_ID int PRIMARY KEY NOT NULL AUTO_INCREMENT,
+            phone_number VARCHAR(16),
+            email VARCHAR(64) NOT NULL,
+            first_name VARCHAR(64) NOT NULL,
+            last_name VARCHAR(64) NOT NULL,
+            password VARCHAR(50) NOT NULL,
+            authorization ENUM('default', 'admin', 'CEO'),
+            default_language VARCHAR(64),
+            language_id int NOT NULL,
+            FOREIGN KEY (language_id) REFERENCES Languages(language_id)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Languages (
+            language_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            word_count INTEGER DEFAULT 0,
+            language_name VARCHAR(64) NOT NULL
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS User_Selected_Languages (
+            User_ID int,
+            Selected_Languages VARCHAR(64) NOT NULL,
+            FOREIGN KEY (User_ID) REFERENCES Users(User_ID)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Word (
+            Word_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
+            Text TEXT NOT NULL,
+            language_id INTEGER,
+            FOREIGN KEY (language_id) REFERENCES Languages(language_id)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Word_Definition (
+            Definition_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            text TEXT NOT NULL,
+            Word_ID INTEGER,
+            FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Word_List (
+            List_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
+            List_Name VARCHAR(64) NOT NULL,
+            User_ID INTEGER NOT NULL,
+            word_count INTEGER DEFAULT 0,
+            Difficulty VARCHAR(64) DEFAULT 'Medium',
+            primary_language int NOT NULL,
+            translated_language int NOT NULL,
+            FOREIGN KEY (User_ID) REFERENCES Users(User_ID),
+            FOREIGN KEY (primary_language) REFERENCES Languages(language_id),
+            FOREIGN KEY (translated_language) REFERENCES Languages(language_id)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Words_In_List (
+            List_ID INTEGER,
+            Word_ID INTEGER,
+            FOREIGN KEY (List_ID) REFERENCES Word_List(List_ID),
+            FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID),
+            PRIMARY KEY (List_ID, Word_ID)
+        );
+    """)
+    mycursor.execute("""
+        CREATE TABLE IF NOT EXISTS Translation (
+            Translation_ID INTEGER PRIMARY KEY AUTO_INCREMENT,
+            Word_ID INTEGER NOT NULL,
+            Translated_Text VARCHAR(255) NOT NULL,
+            FOREIGN KEY (Word_ID) REFERENCES Word(Word_ID)
+        );
+    """)
     print("Tables created")
+
