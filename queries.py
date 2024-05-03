@@ -405,7 +405,6 @@ def Add_word():
             INSERT INTO Word (text, language_id)
             VALUES (%s, %s)
             """, (text, language_id))
-        mycursor.execute("UPDATE Languages SET word_count = word_count + 1 WHERE language_id = %s", (language_id,))
         word_id = mycursor.lastrowid
         db.commit()
     except mysql.connector.IntegrityError as err:
@@ -418,13 +417,42 @@ def Add_word():
     else: 
         Add_definition(word_id)
 
-def Delete_word(): # TODO
-    print("Not implemented yet.")
-    return
-
-def Edit_word(): # TODO
-    print("Not implemented yet.")
-    return
+def Delete_word():
+    while True:
+        text = input("Enter the word you want to delete: ")
+        mycursor.execute("SELECT * FROM Word WHERE Text = %s", (text,))
+        word = mycursor.fetchone()
+        if word:
+            word_id = word[0]
+            language_id = word[2]
+            try:
+                mycursor.execute("DELETE FROM Word WHERE WordID = %s", (word_id,))
+                mycursor.execute("UPDATE Languages SET word_count = word_count - 1 WHERE language_id = %s", (language_id,))
+                db.commit()
+                print("Word deleted successfully!")
+                break
+            except mysql.connector.Error as err:
+                print("Error deleting word:", err)
+        else:
+            print("Word not found. Please enter a valid word.")
+def Edit_word():
+    while True:
+        old_text = input("Enter the word you want to edit: ")
+        mycursor.execute("SELECT * FROM Word WHERE Text = %s", (old_text,))
+        word = mycursor.fetchone()
+        if word:
+            word_id = word[0]
+            language_id = word[2]
+            new_text = input("Enter the new text for the word: ")
+            try:
+                mycursor.execute("UPDATE Word SET Text = %s WHERE WordID = %s", (new_text, word_id))
+                db.commit()
+                print("Word edited successfully!")
+                break
+            except mysql.connector.Error as err:
+                print("Error editing word:", err)
+        else:
+            print("Word not found. Please enter a valid word.")
 
 def Word_Search():
     print("Choose the search type:")
