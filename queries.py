@@ -72,7 +72,7 @@ def Language_Hub(User_ID):
             show_languages()
         elif choice == '2':
             print("")
-            # TODO: Language_Search()
+            Language_Search()
         elif choice == '3':
             menu()
         else:
@@ -338,8 +338,39 @@ def show_languages():
         print(x)
 
 def Language_Search(): # TODO
-    print("Not implemented yet.")
-    return
+    print("Choose the search type:")
+    print("1. Search by Language ID")
+    print("2. Search by  Text")
+    choice = input("Enter your choice (1 or 2): ")
+
+    if choice == '1':
+        # Search by language ID
+        lang_id = input("Enter the Word ID: ")
+        try:
+            lang_id = int(lang_id)  # Ensuring the input is an integer
+            mycursor.execute("SELECT * FROM Languages WHERE language_id = %s", (lang_id,))
+            result = mycursor.fetchone()
+            if result:
+                print("Language Found: ID:", result[0], "Name:", result[2])
+            else:
+                print("No word found with ID:", lang_id)
+        except ValueError:
+            print("Invalid input! Please enter a valid integer for lang ID.")
+        except mysql.connector.Error as err:
+            print("Error: ", err)
+    elif choice == '2':
+        # Search by Language name
+        lang_text = input("Enter part of the language name to search: ")
+        mycursor.execute("SELECT * FROM Languages WHERE language_name LIKE %s", ('%' + lang_text + '%',))
+        results = mycursor.fetchall()
+        if results:
+            print("Words found:")
+            for language in results:
+                print("ID:", language[0], "Language:", language[2])
+        else:
+            print("No words found containing:", lang_text)
+    else:
+        print("Invalid choice. Please select either 1 or 2.")
 
 """_____________________________WORD & DEFINITION FUNCTIONS___________________________________
 Add_word(): adds a new word
