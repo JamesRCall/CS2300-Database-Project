@@ -715,58 +715,77 @@ TODO edit_wordList(User_ID): edits an existing word list
 
 """
 def generate_language_questions(user_id, list_id):
-    # Step 1: Fetch 10 random translations related to the user's selected word list
+    print(f"Fetching translations for list ID {list_id} and user ID {user_id}")
+    
+    # This query fetches translations that are specific to the word list's target language
     mycursor.execute("""
-        SELECT t.Word_ID, t.Translated_Text, t.Language_ID, t.Word_Language
+        SELECT t.Word_ID, t.Translated_Text, t.Language_ID, t.Word_Language, w.Text AS Original_Text
         FROM Translation t
         JOIN Words_In_List wil ON t.Word_ID = wil.Word_ID
-        WHERE wil.List_ID = %s
+        JOIN Word_List wl ON wil.List_ID = wl.List_ID
+        JOIN Word w ON w.Word_ID = t.Word_ID
+        WHERE wl.List_ID = %s AND t.Language_ID = wl.translated_language
         ORDER BY RAND() LIMIT 10
     """, (list_id,))
     translations = mycursor.fetchall()
+    print(f"Translations fetched: {translations}")
 
-    # Step 2: Fetch the user's known and learning languages
+    # Fetching language settings including names for better clarity in question prompts
     mycursor.execute("""
-        SELECT primary_language, translated_language
-        FROM Word_List
-        WHERE List_ID = %s AND User_ID = %s
+        SELECT wl.primary_language, wl.translated_language, pl.language_name AS primary_language_name, tl.language_name AS translated_language_name
+        FROM Word_List wl
+        JOIN Languages pl ON wl.primary_language = pl.language_id
+        JOIN Languages tl ON wl.translated_language = tl.language_id
+        WHERE wl.List_ID = %s AND wl.User_ID = %s
     """, (list_id, user_id))
     language_settings = mycursor.fetchone()
     known_language = language_settings[0]
     learning_language = language_settings[1]
+    known_language_name = language_settings[2]
+    translated_language_name = language_settings[3]
+    print(f"Language settings fetched: Known language - {known_language_name}, Learning language - {translated_language_name}")
 
-    # Step 3: Decide the question type and language for each translation
     questions = []
     for translation in translations:
         question_type = 'multiple choice' if random.choice([True, False]) else 'written'
-        question_language_choice = random.choice([True, False])  # True for known language, False for learning language
+        question_language_choice = random.choice([True, False])  # Randomly choose the question language
 
-        # Generate the question and answer setup
+        # Constructing each question's details
         questions.append({
             'word_id': translation[0],
-            'text': translation[1],
+            'original_text': translation[4],  # The text in its original language
+            'translated_text': translation[1],  # The translated text
             'language_id': translation[2],
             'word_language_id': translation[3],
             'type': question_type,
             'question_language': known_language if question_language_choice else learning_language,
-            'answer_language': learning_language if question_language_choice else known_language
+            'answer_language': learning_language if question_language_choice else known_language,
+            'known_language': known_language,
+            'translated_language': learning_language,
+            'known_language_name': known_language_name,
+            'translated_language_name': translated_language_name
         })
 
+    print(f"Questions generated: {questions}")
     return questions
 
+
 def format_written_question(question):
+    # Determine the text for the question based on the current question language
     mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
     original_text = mycursor.fetchone()[0]
 
-    if question['question_language'] == 'known':
-        prompt = f"What is the translation for '{original_text}' in the learning language?"
+    if question['question_language'] == question['known_language']:
+        prompt = f"What is the translation for '{original_text}' in {question['translated_language_name']}?"
+        correct_answer = question['translated_text']  # This should be fetched correctly aligned with the 'translated_language'
     else:
-        prompt = f"What is the translation for '{question['text']}' in your known language?"
+        prompt = f"What is the translation for '{question['translated_text']}' in {question['known_language_name']}?"
+        correct_answer = original_text
 
     return {
         'type': 'written',
         'prompt': prompt,
-        'correct_answer': question['text']
+        'correct_answer': correct_answer
     }
 
 def format_multiple_choice_question(question):
@@ -774,24 +793,34 @@ def format_multiple_choice_question(question):
     mycursor.execute("SELECT Text FROM Word WHERE Word_ID = %s", (question['word_id'],))
     original_text = mycursor.fetchone()[0]
 
-    # Determine which language ID to exclude in the incorrect options based on question setup
-    exclude_language_id = question['word_language_id'] if question['question_language'] == 'known' else question['language_id']
+    # Determine which language ID to use for fetching incorrect translations
+    target_language_id = question['translated_language'] if question['question_language'] == question['known_language'] else question['known_language']
 
-    # Fetch three additional incorrect translations
+    # Ensure incorrect answers are fetched only from translations in the target language and are not duplicates of the correct answer
     mycursor.execute("""
         SELECT Translated_Text FROM Translation
-        WHERE Word_ID != %s AND Language_ID = %s AND Word_Language != %s
+        WHERE Word_ID != %s AND Language_ID = %s AND Translated_Text != %s
         ORDER BY RAND() LIMIT 3
-    """, (question['word_id'], question['language_id'], exclude_language_id))
+    """, (question['word_id'], target_language_id, question['translated_text']))
     incorrect_answers = [row[0] for row in mycursor.fetchall()]
 
-    # Mix the correct answer with incorrect ones
-    correct_answer = question['text'] if question['question_language'] == 'known' else original_text
-    options = [correct_answer] + incorrect_answers
-    random.shuffle(options)  # Shuffle to mix the correct answer among the incorrect ones
+    # Add additional filtering step if unique answers are insufficient
+    if len(set(incorrect_answers)) < 3:  # If fewer than 3 unique answers
+        # Fetch alternative incorrect answers excluding any that match the correct answer
+        mycursor.execute("""
+            SELECT Translated_Text FROM Translation
+            WHERE Translated_Text != %s AND Language_ID = %s
+            ORDER BY RAND() LIMIT 3
+        """, (question['translated_text'], target_language_id))
+        incorrect_answers = [row[0] for row in mycursor.fetchall()]
 
-    # Setting up the prompt based on the question language
-    prompt = f"What is the correct translation for '{original_text}' in the learning language?" if question['question_language'] == 'known' else f"What is the correct translation for '{question['text']}' in your known language?"
+    # Include the correct answer and shuffle the options
+    correct_answer = question['translated_text'] if question['question_language'] == question['known_language'] else original_text
+    options = [correct_answer] + incorrect_answers
+    random.shuffle(options)
+
+    # Create prompt depending on question language
+    prompt = f"What is the correct translation for '{original_text}' in the {question['translated_language_name']}?" if question['question_language'] == question['known_language'] else f"What is the correct translation for '{question['translated_text']}' in the {question['known_language_name']}?"
 
     return {
         'type': 'multiple choice',
@@ -799,8 +828,6 @@ def format_multiple_choice_question(question):
         'options': options,
         'correct_answer': correct_answer
     }
-
-
 
 def review_learned_words(user_id):
     # Step 1: Fetch user's word lists and let them choose one
