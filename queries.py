@@ -672,7 +672,7 @@ def edit_translation(word):
 
 """_______________________________USER FUNCTIONS_________________________________
 View_Profile(User_ID): views users profile
-TODO edit_user_settings(User_ID): edits users settings
+edit_user_settings(User_ID): edits users settings
 show_user_languages(User_ID): shows all languages user is learning
 Choose_Language(User_ID): assigns a new language to user to learn
 remove_user_language(User_ID, language): removes a language from users list being learned
