@@ -211,7 +211,7 @@ Choose an option""")
             Add_language()
         elif choice == '2':
             language = Sinput("Enter the language to delete:")
-            delete_Language(language)
+            delete_language(language)
         elif choice == '3':
             language = Sinput("Enter the language to edit:")
             Edit_Language(language)
@@ -1360,38 +1360,40 @@ User_Search(): searches for user by id, name, or email
 def Add_language():
     language_name = Sinput("Input language name")
     word_count = 0
-    mycursor.execute("SELECT * FROM Languages WHERE language_name = %s", (language_name))
+    
+    # Check if the language already exists
+    mycursor.execute("SELECT * FROM Languages WHERE language_name = %s", (language_name,))
     if mycursor.fetchone():
-        print(f"Error, language name already exists. Please use a different name.")
-    else: 
-        try: 
+        print("Error, language name already exists. Please use a different name.")
+    else:
+        try:
             mycursor.execute("""
-                INSERT INTO Languages (word_count, languague_name)
+                INSERT INTO Languages (word_count, language_name)
                 VALUES (%s, %s)
                 """, (word_count, language_name))
             db.commit()
-        except mysql.connector.IntegrityError as err:
-            print("Error: {}".format(err))
+            print(f"Language '{language_name}' added successfully.")
+        except mysql.connector.Error as err:
+            print("Error:", err)
             return err
 
-def delete_Language(language):
-    # Start the transaction
-    db.start_transaction()
-    
+def delete_language(language):
     try:
         # Check if the language exists and get its ID
         mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (language,))
-        language_id = mycursor.fetchone()
-        if not language_id:
+        result = mycursor.fetchone()
+        if not result:
             print(f"No such language: {language}")
             return
+
+        language_id = result[0]  # Extracting the integer ID from the tuple
 
         # Get all words in this language
         mycursor.execute("SELECT Word_ID FROM Word WHERE language_id = %s", (language_id,))
         words = mycursor.fetchall()
-        
+
         # Delete related entries from dependent tables
-        for word_id in words:
+        for (word_id,) in words:  # Extracting Word_ID from the tuple
             mycursor.execute("DELETE FROM Translation WHERE Word_ID = %s", (word_id,))
             mycursor.execute("DELETE FROM Word_Definition WHERE Word_ID = %s", (word_id,))
             mycursor.execute("DELETE FROM Words_In_List WHERE Word_ID = %s", (word_id,))
@@ -1409,28 +1411,26 @@ def delete_Language(language):
         db.rollback()
         print(f"Failed to delete language {language}: {e}")
 
-
-def Edit_Language(old_language_name, new_language_name):
+def Edit_Language(language):
     try:
-        # Check if the old language exists
-        mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (old_language_name,))
-        if not mycursor.fetchone():
-            print(f"Language '{old_language_name}' does not exist.")
+        # Check if the language exists
+        mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (language,))
+        result = mycursor.fetchone()
+        if not result:
+            print(f"No such language: {language}")
             return
 
-        # Check if new language name already exists to avoid duplicates
-        mycursor.execute("SELECT language_id FROM Languages WHERE language_name = %s", (new_language_name,))
-        if mycursor.fetchone():
-            print(f"Language name '{new_language_name}' already exists. Please choose another name.")
-            return
+        # Input new language name
+        new_language_name = Sinput("Enter the new name for the language:")
 
         # Update the language name
-        mycursor.execute("UPDATE Languages SET language_name = %s WHERE language_name = %s", (new_language_name, old_language_name))
+        mycursor.execute("UPDATE Languages SET language_name = %s WHERE language_id = %s", (new_language_name, result[0]))
         db.commit()
-        print(f"Language name updated from '{old_language_name}' to '{new_language_name}'.")
+        print(f"Language name updated from {language} to {new_language_name}")
 
-    except mysql.connector.Error as err:
-        print("Error: {}".format(err))
+    except Exception as e:
+        db.rollback()
+        print(f"Failed to update language {language}: {e}")
 
 
 def Show_Users():
