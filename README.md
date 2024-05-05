@@ -1,6 +1,6 @@
 # CS2300-Database-Project
 
-# Project Title: Language Learning and Translation Database
+# Language Learning and Translation Database
 
 ## Overview
 This project is a comprehensive application designed to facilitate language learning and translation. It is built on a MySQL database and provides functionality for managing languages, words, translations, and user interactions through a command-line interface.
