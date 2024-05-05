@@ -60,9 +60,9 @@ Contributions to this project are welcome. You can enhance existing features or 
 We don't have one of those... but it would be cool!
 
 ## Authors
-- James Callender - Main Developer
+- James Callender - Lead Developer
+- Shem De Leon - Developer & Tester
 - Diego Acosta - Developer
-- Shem De Leon - Developer
 - Ryan Kluesner - Developer
 
 Thanks to everyone who has contributed to this project with suggestions, code contributions, and bug reports.
