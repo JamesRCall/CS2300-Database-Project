@@ -92,13 +92,11 @@ Choose an option""")
         if choice == '1':
             Add_word()
         elif choice == '2':
-            word = Sinput("Enter the word to delete:")
             Delete_word()
         elif choice == '3':
-            Word_Search()
-        elif choice == '4':
-            word = Sinput("Enter the word to edit:")
             Edit_word()
+        elif choice == '4':
+            Word_Search()
         elif choice == '5':
             Add_definition()
         elif choice == '6':
