@@ -12,11 +12,9 @@ db = mysql.connector.connect(
 mycursor = db.cursor()
 
 def Sinput(text: str):
-    x = input(f'{text} (press 0 to quit, or m to go back to menu): ')
+    x = input(f'{text} (press 0 to quit): ')
     if x == '0':
         quit()
-    elif x == "m":
-        menu()
     return x
 
 def menu(User_ID = None): 
@@ -32,15 +30,14 @@ def menu(User_ID = None):
     user = mycursor.fetchone()
     authorization, = user
     super_user = False
-    print("""
-    1 Language Options
-    2 Word & Definition Options
-    3 Translation Options
-    4 User Hub
-    5 Learn Hub
-    6 Log Out""")
+    print("""1 Language Options
+2 Word & Definition Options
+3 Translation Options
+4 User Hub
+5 Learn Hub
+6 Log Out""")
     if authorization == 'admin' or authorization == 'CEO':
-        print("""    7 Admin Panel""")
+        print("""7 Admin Panel""")
         super_user = True
     choice = Sinput("Please select an option")
     if choice == '1':
@@ -64,11 +61,11 @@ def menu(User_ID = None):
 def Language_Hub(User_ID):
     while True:
         choice = Sinput("""
-        Language Options:
-        1. Show All Languages
-        2. Search for a Language                
-        3. Go Back
-        Choose an option""")
+Language Options:
+1. Show All Languages
+2. Search for a Language                
+3. Go Back
+Choose an option""")
         if choice == '1':
             show_languages()
         elif choice == '2':
@@ -82,33 +79,32 @@ def Language_Hub(User_ID):
 def Word_Hub(User_ID):
     while True:
         choice = Sinput("""
-        Word & Definition Options:
-        1. Add New Word
-        2. Delete a Word
-        3. Edit a Word  
-        4. Search for a Word
-        5. Add Definition to a Word                              
-        6. Delete a Definition
-        7. Edit a Definition
-        8. Go Back
-        Choose an option""")
+Word & Definition Options:
+1. Add New Word
+2. Delete a Word
+3. Edit a Word  
+4. Search for a Word
+5. Add Definition to a Word                              
+6. Delete a Definition
+7. Edit a Definition
+8. Go Back
+Choose an option""")
         if choice == '1':
             Add_word()
         elif choice == '2':
             word = Sinput("Enter the word to delete:")
             Delete_word()
         elif choice == '3':
+            Word_Search()
+        elif choice == '4':
             word = Sinput("Enter the word to edit:")
             Edit_word()
-        elif choice == '4':
-            Add_definition()
         elif choice == '5':
-            Delete_Definition()
+            Add_definition()
         elif choice == '6':
-            Modify_Definition()
+            Delete_Definition()
         elif choice == '7':
-            print('')
-            Word_Search()
+            Modify_Definition()
         elif choice == '8':
             menu()
         else:
@@ -117,12 +113,12 @@ def Word_Hub(User_ID):
 def Translation_Hub(User_ID):
     while True:
         choice = Sinput("""
-        Translation Options:
-        1. Add Translation for a Word
-        2. Delete Translation for a Word
-        3. Edit Translation for a Word
-        4. Go Back
-        Choose an option""")
+Translation Options:
+1. Add Translation for a Word
+2. Delete Translation for a Word
+3. Edit Translation for a Word
+4. Go Back
+Choose an option""")
         if choice == '1':
             word = Sinput("Enter the word to translate:")
             add_translation(word)
@@ -140,14 +136,14 @@ def Translation_Hub(User_ID):
 def User_Hub(User_ID):
     while True:
         choice = Sinput("""
-        User Hub:
-        1. View My Profile
-        2. Edit My Settings
-        3. Show My Learning Languages
-        4. Learn a New Language
-        5. Remove a Language I'm Learning
-        6. Go Back
-        Choose an option""")
+User Hub:
+1. View My Profile
+2. Edit My Settings
+3. Show My Learning Languages
+4. Learn a New Language
+5. Remove a Language I'm Learning
+6. Go Back
+Choose an option""")
         if choice == '1':
             View_Profile(User_ID)
         elif choice == '2':
@@ -167,17 +163,17 @@ def User_Hub(User_ID):
 def Learn_Hub(User_ID):
     while True:
         choice = Sinput("""
-        Learn Hub:
-        1. Review Learned Words
-        2. Practice New Vocabulary
-        3. Track Learning Progress
-        4. Make a Word List
-        5. Add words to Word List
-        6. Remove words from Word List
-        7. Delete a Word List
-        8. Edit a Word List
-        9. Go Back
-        Choose an option""")
+Learn Hub:
+1. Review Learned Words
+2. Practice New Vocabulary
+3. Track Learning Progress
+4. Make a Word List
+5. Add words to Word List
+6. Remove words from Word List
+7. Delete a Word List
+8. Edit a Word List
+9. Go Back
+Choose an option""")
         if choice == '1':
             review_learned_words(User_ID)
         elif choice == '2':
@@ -202,17 +198,17 @@ def Learn_Hub(User_ID):
 def Admin_Panel(User_ID):
     while True:
         choice = Sinput("""
-        Admin Panel:
-        1. Add New Language
-        2. Delete a Language
-        3. Edit a Language
-        4. Show Users
-        5. Add_User
-        6. Delete Users
-        7. Edit Users
-        8. User Search
-        9. Go Back
-        Choose an option""")
+Admin Panel:
+1. Add New Language
+2. Delete a Language
+3. Edit a Language
+4. Show Users
+5. Add_User
+6. Delete Users
+7. Edit Users
+8. User Search
+9. Go Back
+Choose an option""")
         if choice == '1':
             Add_language()
         elif choice == '2':
@@ -342,7 +338,7 @@ def Language_Search():
 
     if choice == '1':
         # Search by language ID
-        lang_id = Sinput("Enter the Word ID")
+        lang_id = Sinput("Enter the Language ID")
         try:
             lang_id = int(lang_id)  # Ensuring the input is an integer
             mycursor.execute("SELECT * FROM Languages WHERE language_id = %s", (lang_id,))
@@ -350,7 +346,7 @@ def Language_Search():
             if result:
                 print("Language Found: ID:", result[0], "Name:", result[2])
             else:
-                print("No word found with ID:", lang_id)
+                print("No Language found with ID:", lang_id)
         except ValueError:
             print("Invalid input! Please enter a valid integer for lang ID.")
         except mysql.connector.Error as err:
@@ -361,11 +357,11 @@ def Language_Search():
         mycursor.execute("SELECT * FROM Languages WHERE language_name LIKE %s", ('%' + lang_text + '%',))
         results = mycursor.fetchall()
         if results:
-            print("Words found:")
+            print("Language(s) found:")
             for language in results:
                 print("ID:", language[0], "Language:", language[2])
         else:
-            print("No words found containing:", lang_text)
+            print("No Language found containing:", lang_text)
     else:
         print("Invalid choice. Please select either 1 or 2.")
 
@@ -502,35 +498,38 @@ def Word_Search():
         print("Invalid choice. Please select either 1 or 2.")
 
 def Add_definition(word_id: int = None):
-    while word_id == None:
+    while word_id is None:
         word = Sinput("Enter the word you'd like to add a definition to")
-        mycursor.execute("SELECT Word_ID FROM Languages WHERE language_name = (%s)", (word,))
-        word_id = mycursor.fetchone()
-        if word_id == None:
+        mycursor.execute("SELECT Word_ID FROM Word WHERE Text = (%s)", (word,))
+        word_id_result = mycursor.fetchone()
+        if word_id_result is None:
             print("Error, that word does not exist.")
-    new = 0
-    while new == 0:
-        definition = Sinput("Enter your word's definition")      
-        if definition == '0':
-            quit()
+            continue
+        word_id = word_id_result[0]  # Correct extraction of word_id
+
+    definition_added = False
+    while not definition_added:
+        definition = Sinput("Enter your word's definition")
+        if definition.lower() == 'quit':
+            return  # Exit the function
+
         mycursor.execute("SELECT * FROM Word_Definition WHERE text = %s AND Word_ID = %s", (definition, word_id))
         if mycursor.fetchone():
-            print(f"Error, definition already exist. Try again.")
+            print("Error, definition already exists. Try again.")
         else:
-            new += 1
-    try: 
+            definition_added = True
+
+    try:
         mycursor.execute("""
             INSERT INTO Word_Definition (text, Word_ID)
             VALUES (%s, %s)
             """, (definition, word_id))
         db.commit()
+        print("Definition added successfully!")
     except mysql.connector.IntegrityError as err:
-        print("Error: {}".format(err))
+        print(f"Error: {err}")
         return err
-    
-    choice = input("Definition added successfully! [press ENTER]")
-    if choice == 1:
-       db.commit()
+
 
 def Modify_Definition():
     # CHANGE: User enters a word. The word's definition and definition id's are printed. User chooses the definition id
