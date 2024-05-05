@@ -1,7 +1,7 @@
 -- Create the database
-DROP DATABASE IF EXISTS test5;
-CREATE DATABASE IF NOT EXISTS test5;
-USE test5;
+DROP DATABASE IF EXISTS language_database;
+CREATE DATABASE IF NOT EXISTS language_database;
+USE language_database;
 
 -- Create tables without foreign key constraints
 CREATE TABLE IF NOT EXISTS Users (

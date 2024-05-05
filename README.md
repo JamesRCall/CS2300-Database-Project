@@ -31,11 +31,11 @@ What you need to install the software:
    mysql -u root -p
    ```
 
-### Create a new database named test5 and use it:
+### Create a new database named language_database and use it:
 
 ```sql
-CREATE DATABASE IF NOT EXISTS test5;
-USE test5;
+CREATE DATABASE IF NOT EXISTS language_database;
+USE language_database;
 ```
 ## Running the Application
 1. Clone the repository or download the source code.

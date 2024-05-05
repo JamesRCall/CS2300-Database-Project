@@ -1,7 +1,7 @@
 -- This file adds test data for the database
 
 -- Use the appropriate database
-USE test5;
+USE language_database;
 
 -- Inserting data into Languages
 INSERT INTO Languages (language_name) VALUES ('English'), ('French'), ('Spanish'), ('German'), ('Japanese');
