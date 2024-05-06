@@ -241,7 +241,7 @@ signup(): creates a new user
 def start():
     User_ID = None
     while User_ID == None:
-        choice = input("Please choose login(1) or sign-up(2) or quit(0):")
+        choice = input("Please choose login(1) or sign-up(2) or quit(0): ")
         if choice == '0':
             quit()
         elif choice == '1':
@@ -1487,9 +1487,15 @@ def Add_User(admin: bool, phone_number: str = None, email: str = None, first_nam
        db.commit()
     return User_ID
 
-def Delete_User(user_id):
-    # Start transaction
-    db.start_transaction()
+def Delete_User():
+    user_id = Sinput("Enter the User ID of the user you want to edit")
+    
+    # Fetch and display current user details for reference
+    mycursor.execute("SELECT * FROM Users WHERE User_ID = %s", (user_id,))
+    user_details = mycursor.fetchone()
+    if not user_details:
+        print("User not found.")
+        return
 
     try:
         # Delete entries from Words_In_List using Word_List linked to the User
