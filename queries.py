@@ -1452,13 +1452,12 @@ def Add_User(admin: bool, phone_number: str = None, email: str = None, first_nam
                 first_name = Sinput("Enter their first name")
                 last_name = Sinput("Enter their last name")
                 password = Sinput("Enter their password")
-                level = 0
-                while level == 0:
-                    authorization = Sinput("Enter their authorization level")
-                    if authorization != 'default' or authorization != 'admin' or authorization != 'CEO':
+                while True:
+                    authorization = str(Sinput("Enter their authorization level"))
+                    if authorization != 'default' and authorization != 'admin' and authorization != 'CEO':
                         print("Error, not supported authorization level.")
                     else:
-                        level +=1
+                        break
                 valid = 0
                 while valid == 0:
                     default_language = Sinput("Enter your default language")
