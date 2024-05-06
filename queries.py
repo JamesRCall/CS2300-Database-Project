@@ -542,12 +542,12 @@ def Modify_Definition():
       for x in mycursor:
         print(x)
       definition_id = Sinput("Enter the definition id to modify")
-      mycursor.execute("SELECT Definition_id FROM Word_Definition WHERE text=%s", (definition_id,))
+      mycursor.execute("SELECT Definition_id FROM Word_Definition WHERE Definition_id=%s", (definition_id,))
       definition_id = mycursor.fetchone()
       if definition_id is not None:
         definition_id = definition_id[0]
         new_definition = Sinput("Enter the new definition")
-        mycursor.execute("UPDATE Word_Definition SET text=%s WHERE Definition_id=%s", (new_definition,definition_id))
+        mycursor.execute("UPDATE Word_Definition SET text=%s WHERE Text=%s", (new_definition,definition_id))
         db.commit()
         print("Definition changed successfully!")
       else:
